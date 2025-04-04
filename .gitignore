@@ -17,6 +17,19 @@ yarn-error.log
 package-lock.json
 .npm
 
+# Angular
+.angular/
+dist/
+coverage/
+.sass-cache/
+connect.lock
+libpeerconnection.log
+testem.log
+typings/
+e2e/*.js
+e2e/*.map
+.browserslistrc.bak
+
 # Build results
 [Dd]ebug/
 [Rr]elease/
