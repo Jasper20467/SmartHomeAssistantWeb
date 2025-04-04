@@ -1,0 +1,6 @@
+variables:
+  environmentName: 'Development'
+  azureServiceConnection: 'SmartHome-Dev'
+  appServiceName: 'smarthome-assistant-dev'
+  resourceGroupName: 'rg-smarthome-dev'
+  slotName: 'staging'

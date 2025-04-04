@@ -1,0 +1,19 @@
+trigger:
+  branches:
+    include:
+    - main
+    - develop
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+- template: infrastructure/pipelines/variables/common.yml
+- ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:
+  - template: infrastructure/pipelines/variables/prod.yml
+- ${{ if eq(variables['Build.SourceBranchName'], 'develop') }}:
+  - template: infrastructure/pipelines/variables/dev.yml
+
+stages:
+- template: infrastructure/pipelines/templates/build-stage.yml
+- template: infrastructure/pipelines/templates/deploy-stage.yml

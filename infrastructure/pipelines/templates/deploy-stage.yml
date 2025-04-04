@@ -1,0 +1,37 @@
+stages:
+- stage: Deploy
+  displayName: 'Deploy to $(environmentName)'
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+  - deployment: DeployWebApp
+    displayName: 'Deploy Web App'
+    environment: $(environmentName)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: AzureResourceManagerTemplateDeployment@3
+            displayName: 'Deploy ARM Template'
+            inputs:
+              deploymentScope: 'Resource Group'
+              azureResourceManagerConnection: '$(azureServiceConnection)'
+              subscriptionId: '$(subscriptionId)'
+              action: 'Create Or Update Resource Group'
+              resourceGroupName: '$(resourceGroupName)'
+              location: '$(location)'
+              templateLocation: 'Linked artifact'
+              csmFile: '$(Pipeline.Workspace)/drop/infrastructure/arm-templates/webapp.json'
+              overrideParameters: '-webAppName "$(appServiceName)" -environment "$(environmentName)"'
+              deploymentMode: 'Incremental'
+
+          - task: AzureWebApp@1
+            displayName: 'Deploy to App Service'
+            inputs:
+              azureSubscription: '$(azureServiceConnection)'
+              appType: 'webApp'
+              appName: '$(appServiceName)'
+              package: '$(Pipeline.Workspace)/drop/**/*.zip'
+              deployToSlotOrASE: true
+              resourceGroupName: '$(resourceGroupName)'
+              slotName: '$(slotName)'
