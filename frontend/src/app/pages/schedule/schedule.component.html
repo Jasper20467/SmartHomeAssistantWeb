@@ -1,0 +1,83 @@
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">行事曆</h1>
+    <button class="btn" (click)="toggleForm()">
+      {{ showForm ? '取消' : '新增行程' }}
+    </button>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+  <!-- 新增/編輯表單 -->
+  <div class="card" *ngIf="showForm">
+    <h2>{{ editingScheduleId ? '編輯行程' : '新增行程' }}</h2>
+    
+    <form [formGroup]="scheduleForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="title">標題</label>
+        <input type="text" id="title" formControlName="title" class="form-control" placeholder="請輸入行程標題">
+        <div *ngIf="scheduleForm.get('title')?.invalid && scheduleForm.get('title')?.touched" class="error-message">
+          標題為必填項目
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="description">描述</label>
+        <textarea id="description" formControlName="description" class="form-control" rows="3" placeholder="請輸入行程描述"></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label for="start_time">開始時間</label>
+        <input type="datetime-local" id="start_time" formControlName="start_time" class="form-control">
+        <div *ngIf="scheduleForm.get('start_time')?.invalid && scheduleForm.get('start_time')?.touched" class="error-message">
+          開始時間為必填項目
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="end_time">結束時間</label>
+        <input type="datetime-local" id="end_time" formControlName="end_time" class="form-control">
+      </div>
+      
+      <div class="form-actions">
+        <button type="submit" class="btn" [disabled]="scheduleForm.invalid || isSubmitting">
+          {{ isSubmitting ? '處理中...' : (editingScheduleId ? '更新' : '新增') }}
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="resetForm()">取消</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 行程列表 -->
+  <div class="card">
+    <div class="card-header">
+      <h2>所有行程</h2>
+      <button class="btn btn-secondary" (click)="loadSchedules()">重新載入</button>
+    </div>
+    
+    <app-loading-spinner *ngIf="isLoading"></app-loading-spinner>
+    
+    <div *ngIf="!isLoading">
+      <div *ngIf="schedules.length === 0" class="empty-state">
+        目前沒有行程，請點擊"新增行程"按鈕來新增。
+      </div>
+      
+      <div class="schedule-list">
+        <div *ngFor="let schedule of schedules" class="schedule-item">
+          <div class="schedule-content">
+            <h3>{{ schedule.title }}</h3>
+            <p *ngIf="schedule.description">{{ schedule.description }}</p>
+            <div class="schedule-time">
+              <span>開始: {{ schedule.start_time | date:'yyyy-MM-dd HH:mm' }}</span>
+              <span *ngIf="schedule.end_time">結束: {{ schedule.end_time | date:'yyyy-MM-dd HH:mm' }}</span>
+            </div>
+          </div>
+          <div class="schedule-actions">
+            <button class="btn-icon edit" (click)="editSchedule(schedule)" title="編輯">✏️</button>
+            <button class="btn-icon delete" (click)="deleteSchedule(schedule.id!)" title="刪除">🗑️</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

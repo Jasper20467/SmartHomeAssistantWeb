@@ -1,0 +1,124 @@
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">耗材管理</h1>
+    <button class="btn" (click)="toggleForm()">
+      {{ showForm ? '取消' : '新增耗材' }}
+    </button>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+  <!-- 新增/編輯表單 -->
+  <div class="card" *ngIf="showForm">
+    <h2>{{ editingConsumableId ? '編輯耗材' : '新增耗材' }}</h2>
+    
+    <form [formGroup]="consumableForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="name">名稱</label>
+        <input type="text" id="name" formControlName="name" class="form-control" placeholder="請輸入耗材名稱">
+        <div *ngIf="consumableForm.get('name')?.invalid && consumableForm.get('name')?.touched" class="error-message">
+          名稱為必填項目
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="category">分類</label>
+        <select id="category" formControlName="category" class="form-control">
+          <option value="">選擇分類</option>
+          <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+        </select>
+        <div *ngIf="consumableForm.get('category')?.invalid && consumableForm.get('category')?.touched" class="error-message">
+          分類為必填項目
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="installation_date">安裝日期</label>
+        <input type="date" id="installation_date" formControlName="installation_date" class="form-control">
+        <div *ngIf="consumableForm.get('installation_date')?.invalid && consumableForm.get('installation_date')?.touched" class="error-message">
+          安裝日期為必填項目
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="lifetime_days">使用壽命(天)</label>
+        <input type="number" id="lifetime_days" formControlName="lifetime_days" class="form-control" min="1">
+        <div *ngIf="consumableForm.get('lifetime_days')?.invalid && consumableForm.get('lifetime_days')?.touched" class="error-message">
+          使用壽命必須大於0
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="notes">備註</label>
+        <textarea id="notes" formControlName="notes" class="form-control" rows="3" placeholder="請輸入備註"></textarea>
+      </div>
+      
+      <div class="form-actions">
+        <button type="submit" class="btn" [disabled]="consumableForm.invalid || isSubmitting">
+          {{ isSubmitting ? '處理中...' : (editingConsumableId ? '更新' : '新增') }}
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="resetForm()">取消</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 耗材列表 -->
+  <div class="card">
+    <div class="card-header">
+      <h2>所有耗材</h2>
+      <button class="btn btn-secondary" (click)="loadConsumables()">重新載入</button>
+    </div>
+    
+    <app-loading-spinner *ngIf="isLoading"></app-loading-spinner>
+    
+    <div *ngIf="!isLoading">
+      <div *ngIf="consumables.length === 0" class="empty-state">
+        目前沒有耗材記錄，請點擊"新增耗材"按鈕來新增。
+      </div>
+      
+      <div class="consumables-grid">
+        <div *ngFor="let consumable of consumables" class="consumable-card">
+          <div class="consumable-header">
+            <h3>{{ consumable.name }}</h3>
+            <span class="badge category-badge">{{ consumable.category }}</span>
+          </div>
+          
+          <div class="consumable-details">
+            <div class="detail-row">
+              <span class="detail-label">安裝日期:</span>
+              <span class="detail-value">{{ consumable.installation_date | date:'yyyy-MM-dd' }}</span>
+            </div>
+            
+            <div class="detail-row">
+              <span class="detail-label">使用壽命:</span>
+              <span class="detail-value">{{ consumable.lifetime_days }} 天</span>
+            </div>
+            
+            <div class="detail-row">
+              <span class="detail-label">狀態:</span>
+              <span class="detail-value">
+                <span class="badge" [ngClass]="getStatusClass(consumable.days_remaining)">
+                  <span *ngIf="consumable.days_remaining !== undefined && consumable.days_remaining > 0">
+                    剩餘: {{ consumable.days_remaining }} 天
+                  </span>
+                  <span *ngIf="consumable.days_remaining !== undefined && consumable.days_remaining <= 0">
+                    已過期
+                  </span>
+                </span>
+              </span>
+            </div>
+            
+            <div class="detail-notes" *ngIf="consumable.notes">
+              <p>{{ consumable.notes }}</p>
+            </div>
+          </div>
+          
+          <div class="consumable-actions">
+            <button class="btn-icon edit" (click)="editConsumable(consumable)" title="編輯">✏️</button>
+            <button class="btn-icon delete" (click)="deleteConsumable(consumable.id!)" title="刪除">🗑️</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
