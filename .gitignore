@@ -87,3 +87,68 @@ yarn-error.log*
 # OS specific
 .DS_Store
 Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.env
+*.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+*.egg
+*.egg-info/
+dist/
+build/
+*.manifest
+*.spec
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Pytest
+.cache/
+*.pytest_cache/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Coverage
+.coverage
+*.cover
+*.coverage.*
+htmlcov/
+
+# PyInstaller
+*.spec
+*.log
+*.tmp
+
+# Virtualenv
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+media/
+
+# Flask
+instance/
+.webassets-cache/
+
+# Scrapy
+.scrapy/
+
+# Sphinx
+docs/_build/
+
+# PyCharm
+.idea/

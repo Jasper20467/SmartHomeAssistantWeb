@@ -32,6 +32,22 @@ services:
       - DATABASE_URL=postgresql://postgres:password@db:5432/homeassistant
       - ENVIRONMENT=development
 
+  linebot:
+    build:
+      context: .
+      dockerfile: docker/linebot.Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./LineBotAI:/app
+    depends_on:
+      - backend
+    environment:
+      - LINE_CHANNEL_ACCESS_TOKEN=${LINE_CHANNEL_ACCESS_TOKEN}
+      - CHATGPT_API_KEY=${CHATGPT_API_KEY}
+      - BACKEND_API_URL=http://backend:8000
+      - DEBUG_MODE=true
+
   db:
     image: postgres:14
     ports:
