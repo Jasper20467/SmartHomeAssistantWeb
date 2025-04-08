@@ -1,5 +1,7 @@
 # LineBotAI
 
+LineBotAI 是一個基於 Flask 的應用程式，結合了 LINE Messaging API 與 ChatGPT，提供智能聊天機器人服務。
+
 ## 程式架構
 
 `LineBotAI` 模組設計用於整合 LINE Messaging API，提供智慧家庭助理功能。其架構包含以下元件：
@@ -8,6 +10,17 @@
 2. **訊息處理器**：處理使用者訊息並決定適當的回應。
 3. **API 整合**：與外部 API（如智慧家庭設備、天氣服務）介接以獲取或傳送資料。
 4. **配置管理**：集中管理 API 金鑰、權杖及其他設定。
+
+## 環境變數
+
+應用程式使用以下環境變數：
+
+- `LINE_CHANNEL_ACCESS_TOKEN`：LINE Messaging API 的存取權杖。
+- `CHATGPT_API_KEY`：ChatGPT 的 API 金鑰。
+- `BACKEND_API_URL`：後端 API 的 URL（預設值：`http://localhost:8000`）。
+- `DEBUG_MODE`：啟用或停用除錯模式（`true` 或 `false`）。
+- `DEBUG_STAGE`：啟用或停用除錯階段（`true` 或 `false`）。
+- `PORT`：Flask 應用程式的埠號（預設值：`5000`）。
 
 ## API 文件
 
@@ -53,6 +66,11 @@
     }'
   ```
 
+**使用方式**：
+- 當使用者透過 LINE 傳送訊息時，LINE Messaging API 會觸發此端點。
+- 使用 `replyToken` 回覆訊息給使用者。
+- 使用者的訊息內容（`message.text`）會由 ChatGPT 處理，並將回應傳回給使用者。
+
 ---
 
 ### 2. `/api/health` (GET)
@@ -72,6 +90,9 @@
   curl http://localhost:5000/api/health
   ```
 
+**使用方式**：
+- 使用此端點檢查應用程式是否正常啟動。
+
 ---
 
 ### 3. `/api/debug/test` (POST)
@@ -81,7 +102,10 @@
   ```json
   {
     "test_mode": "1", // "1" 表示僅測試後端，"2" 表示測試後端與 ChatGPT
-    "message": "string"
+    "message": "string", // If test on Backend only, no limit. It only used for ChatGptAPI
+    "category": "string", // schedules / consumables
+    "operate": "string", // GET/POST/DELETE/PUT
+    "content": "{}" // 測試內容，例如查詢的具體問題或指令
   }
   ```
 
@@ -94,6 +118,53 @@
       }
     }
     ```
+  - 測試模式 2:
+    ```json
+    {
+      "chatgpt": {
+        "response": "ChatGPT response"
+      },
+      "backend": {
+        "response": "Backend API response"
+      }
+    }
+    ```
+
+- **範例**:
+  ```bash
+  curl -X POST http://localhost:5000/api/debug/test \
+    -H "Content-Type: application/json" \
+    -d '{
+      "test_mode": "1",
+      "message": "What is the weather today?",
+      "category": "consumables",
+      "operate": "POST",
+      "content": {
+        "name": "濾水器濾心便宜貨",
+        "category": "空氣清淨機濾網",
+        "installation_date": "2025-04-12",
+        "lifetime_days": 91,
+        "notes": "",
+        "id": 99,
+        "created_at": "2025-04-08T16:31:34.125246Z",
+        "updated_at": "2025-04-08T16:31:34.125246Z",
+        "days_remaining": 90
+    }
+  }'
+  ```
+```bash
+  curl -X POST http://localhost:5000/api/debug/test \
+    -H "Content-Type: application/json" \
+    -d '{
+      "test_mode": "1",
+      "message": "What is the weather today?",
+      "category": "schedules",
+      "operate": "DELETE",
+      "content": {"id":3}
+  }'
+  ```
+
+
   - 測試模式 2:
     ```json
     {
@@ -225,6 +296,33 @@
 4. **WEBHOOK_URL**：
    - 確保伺服器的 URL 可公開存取，並設定為 LINE 平台的 webhook URL。
    - 可使用工具如 ngrok 測試本地開發環境。
+
+## 如何運行
+
+1. 複製此專案。
+2. 安裝依賴：
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. 在 `.env` 文件中設定環境變數。
+4. 啟動應用程式：
+   ```bash
+   python app.py
+   ```
+5. 在瀏覽器中訪問 `http://localhost:5000`。
+
+## 日誌
+
+日誌預設為 `INFO` 級別。您可以在 `app.py` 文件中修改日誌級別。
+
+## 除錯
+
+- 在 `.env` 文件中啟用 `DEBUG_MODE` 以進入除錯模式。
+- 使用 `/api/health` 端點確認應用程式狀態。
+
+## 授權
+
+此專案採用 MIT 授權條款。
 
 ## Notes
 

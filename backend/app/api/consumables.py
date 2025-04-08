@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from typing import List
+from typing import List, Optional
 from datetime import date, datetime
 from pydantic import BaseModel
 from app.database.database import get_db
@@ -15,7 +15,7 @@ class ConsumableBase(BaseModel):
     category: str
     installation_date: date
     lifetime_days: int
-    notes: str = None
+    notes: Optional[str] = None  # 修改為可選
 
 
 class ConsumableCreate(ConsumableBase):

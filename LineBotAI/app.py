@@ -1,6 +1,11 @@
+import sys
+import os
+
+# Add the LineBotAI directory to the Python path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from flask import Flask, request, jsonify, render_template_string
 import requests
-import os
 import json
 import logging
 from dotenv import load_dotenv

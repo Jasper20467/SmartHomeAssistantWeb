@@ -56,10 +56,10 @@ export class ScheduleComponent implements OnInit {
     this.isSubmitting = true;
     const formData = this.scheduleForm.value;
 
-    // Format dates properly for API
+    // Ensure description is always a string
     const scheduleData: ScheduleCreateDto = {
       title: formData.title,
-      description: formData.description,
+      description: formData.description || "", // Default to an empty string
       start_time: new Date(formData.start_time).toISOString(),
       end_time: formData.end_time ? new Date(formData.end_time).toISOString() : undefined
     };

@@ -11,10 +11,6 @@ from .auth_service import AuthService
 from .schedule_service import ScheduleService
 from .consumable_service import ConsumableService
 from .device_service import DeviceService
-from .room_service import RoomService
-from .scene_service import SceneService
-from .automation_service import AutomationService
-from .state_service import StateService
 
 
 class HomeAssistantClient:
@@ -37,10 +33,6 @@ class HomeAssistantClient:
         self.schedules = ScheduleService(base_service)
         self.consumables = ConsumableService(base_service)
         self.devices = DeviceService(base_service)
-        self.rooms = RoomService(base_service)
-        self.scenes = SceneService(base_service)
-        self.automations = AutomationService(base_service)
-        self.states = StateService(base_service)
 
     def update_auth_header(self, api_key: str) -> None:
         """Update authorization header with new API key."""

@@ -72,7 +72,7 @@ export class ConsumableComponent implements OnInit {
       category: formData.category,
       installation_date: formData.installation_date,
       lifetime_days: formData.lifetime_days,
-      notes: formData.notes
+      notes: formData.notes || "" // 確保 notes 為空字串而非 null
     };
 
     if (this.editingConsumableId) {

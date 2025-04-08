@@ -10,10 +10,6 @@ from .auth_service import AuthService
 from .schedule_service import ScheduleService
 from .consumable_service import ConsumableService
 from .device_service import DeviceService
-from .room_service import RoomService
-from .scene_service import SceneService
-from .automation_service import AutomationService
-from .state_service import StateService
 
 # For backward compatibility
 HomeAssistantService = HomeAssistantClient

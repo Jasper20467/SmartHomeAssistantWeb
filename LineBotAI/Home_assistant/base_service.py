@@ -8,7 +8,6 @@ import requests
 import logging
 from typing import Dict, Any
 
-
 class BaseService:
     """Base service class with common functionality for API calls."""
     

@@ -92,6 +92,7 @@ Thumbs.db
 __pycache__/
 *.py[cod]
 *.pyo
+*.pyc
 *.pyd
 *.env
 *.venv

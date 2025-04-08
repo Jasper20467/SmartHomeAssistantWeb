@@ -29,12 +29,12 @@ class ConsumableService:
     def create_consumable(self, consumable_data: Dict[str, Any]) -> Dict[str, Any]:
         """Create a new consumable."""
         endpoint = "/api/consumables"
-        return self.base.make_request("POST", endpoint, json=consumable_data)
+        return self.base.make_request("POST", endpoint, data=consumable_data)
     
     def update_consumable(self, consumable_id: str, update_data: Dict[str, Any]) -> Dict[str, Any]:
         """Update an existing consumable."""
         endpoint = f"/api/consumables/{consumable_id}"
-        return self.base.make_request("PUT", endpoint, json=update_data)
+        return self.base.make_request("PUT", endpoint, data=update_data)
     
     def delete_consumable(self, consumable_id: str) -> None:
         """Delete a consumable by its ID."""

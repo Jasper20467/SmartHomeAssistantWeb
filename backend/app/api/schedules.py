@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 from pydantic import BaseModel, Field
 from app.database.database import get_db
@@ -12,9 +12,9 @@ router = APIRouter()
 # Pydantic models for request/response
 class ScheduleBase(BaseModel):
     title: str
-    description: str = None
+    description: Optional[str] = None  # Allow None for optional fields
     start_time: datetime
-    end_time: datetime = None
+    end_time: Optional[datetime] = None
 
 class ScheduleCreate(ScheduleBase):
     pass
