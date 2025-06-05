@@ -11,9 +11,16 @@ class Config:
 app = FastAPI(title="Smart Home Assistant API")
 
 # Configure CORS
+origins = [
+    "http://localhost:4200",  # Dev - Angular default
+    "http://localhost:80",    # Dev - Docker with port 80
+    "http://localhost",       # Dev - Docker default port
+    "*",                      # Allow all origins in production
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4200"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:18-alpine as build
 
 WORKDIR /app
 
@@ -14,7 +14,18 @@ RUN npm install
 # Copy all files from context
 COPY . .
 
-EXPOSE 4200
+# Build the app in production mode
+RUN ng build --configuration production
 
-# Use a shell to create necessary components and setup routing
-CMD ["/bin/sh", "-c", "ng serve --host 0.0.0.0"]
+# Stage 2: Serve with Nginx
+FROM nginx:alpine
+
+# Copy built app from previous stage
+COPY --from=build /app/dist/smart-home-assistant-web /usr/share/nginx/html
+
+# Copy Nginx configuration
+COPY ./nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

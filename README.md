@@ -159,9 +159,136 @@ SmartHomeAssistantWeb/
 docker-compose -f docker-compose.yml up --build
 ```
 
+### 部署至 Azure Container Apps
+
+#### 前置準備
+
+1. 安裝 Azure CLI 並登入
+   ```powershell
+   # 安裝 Azure CLI (如果尚未安裝)
+   # 詳見: https://docs.microsoft.com/zh-tw/cli/azure/install-azure-cli
+
+   # 登入 Azure
+   az login
+   ```
+
+2. 確保已安裝 Azure CLI 容器應用擴充功能
+   ```powershell
+   az extension add --name containerapp --upgrade
+   ```
+
+3. 確保您已建立一個 Azure Container Registry (ACR)
+   ```powershell
+   # 建立資源群組（若不存在）
+   az group create --name JYSmartHomeAssistant --location eastasia
+
+   # 建立 Container Registry（若不存在）
+   az acr create --resource-group JYSmartHomeAssistant --name jasperbasicacr --sku Basic
+   ```
+
+4. 登入 ACR 並獲取密碼
+   ```powershell
+   az acr login --name jasperbasicacr
+   $acrPassword = az acr credential show --name jasperbasicacr --query "passwords[0].value" -o tsv
+   ```
+
+#### 建置與推送 Docker 映像檔
+
+1. 建置映像檔並標記為生產環境版本
+   ```powershell
+   # 建置前端映像檔
+   docker build -f ./docker/frontend.Dockerfile -t jasperbasicacr.azurecr.io/smarthomeassistantweb-frontend:1.0 ./frontend
+
+   # 建置後端映像檔
+   docker build -f ./docker/backend.Dockerfile -t jasperbasicacr.azurecr.io/smarthomeassistantweb-backend:1.0 ./backend
+
+   # 建置資料庫映像檔
+   docker build -t jasperbasicacr.azurecr.io/smarthomeassistantweb-db:1.0 -f ./docker/postgres.Dockerfile .
+   ```
+
+2. 推送映像檔到 ACR
+   ```powershell
+   docker push jasperbasicacr.azurecr.io/smarthomeassistantweb-frontend:1.0
+   docker push jasperbasicacr.azurecr.io/smarthomeassistantweb-backend:1.0
+   docker push jasperbasicacr.azurecr.io/smarthomeassistantweb-db:1.0
+   ```
+
+#### 部署至 Azure Container Apps
+
+使用提供的部署腳本：
+```powershell
+# 移動到基礎設施目錄
+cd infra
+
+# 執行部署腳本
+./deploy.ps1 -resourceGroupName "JYSmartHomeAssistant" -location "eastasia" -appName "JYHomeAssistant" -acrName "jasperbasicacr" -acrPassword $acrPassword -dbPassword "YourSecureDbPassword" -imageTag "1.0"
+```
+
+部署完成後，腳本將顯示應用程式的 URL。
+
+#### 重要說明
+
+- 前端應用在 Azure Container Apps 環境中使用 HTTP 埠 80（而非開發環境的 4200）
+- NGINX 已配置為支援 Angular 的客戶端路由，避免 404 錯誤
+- NGINX 同時配置了反向代理，將 `/api` 請求轉發到後端服務
+- 後端 API 已啟用 CORS，支援跨域請求
+- 前端環境配置已針對生產環境進行優化
+- 所有服務間通信已配置在同一 Azure Container Apps 環境內
+- 資料庫資料將持久化在 Azure 管理的存儲中
+- LineBot 元件在目前設定中已被暫時禁用
+
 ---
 
 ## 故障排除
+
+### Angular 路由在 NGINX 環境中的 404 問題
+
+在生產環境中，Angular 的客戶端路由可能會導致 404 錯誤，因為 NGINX 預設會嘗試查找與 URL 路徑匹配的文件。解決方法：
+
+1. 已在 `docker/nginx.conf` 中配置了 NGINX，使其支援 Angular 的客戶端路由：
+```nginx
+location / {
+    try_files $uri $uri/ /index.html;
+}
+```
+
+2. 此配置確保所有路由都回退到 index.html，讓 Angular 路由接管導航。
+
+3. 如果仍然出現問題，可手動重建並部署：
+```bash
+docker build -f ./docker/frontend.Dockerfile -t frontend ./frontend
+docker run -p 80:80 frontend
+```
+
+### CORS 相關問題
+
+如遇到 CORS（跨域資源共享）問題，通常表現為 API 請求返回 307 重定向或 OPTIONS 請求返回 400 錯誤：
+
+1. 後端已配置 CORS 中間件，允許來自多個來源的請求：
+```python
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:4200", "http://localhost:80", "http://localhost", "*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+2. 前端 NGINX 配置已設置反向代理，將 API 請求轉發到後端：
+```nginx
+location /api/ {
+    proxy_pass http://backend:8000/api/;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    # ... 其他代理設置 ...
+}
+```
+
+3. 如果仍有 CORS 問題，可檢查：
+   - 瀏覽器控制台錯誤信息
+   - 後端日誌中的詳細錯誤
+   - 確保 API 請求 URL 與環境配置匹配
 
 ### Docker 環境中的數據庫連接問題
 
