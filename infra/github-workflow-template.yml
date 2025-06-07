@@ -1,0 +1,129 @@
+name: Build and Deploy to Azure Container Apps
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "v*.*.*" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+  # 使用環境變數配置部署參數
+  AZURE_RESOURCE_GROUP: JYSmartHomeAssistant
+  AZURE_LOCATION: eastasia
+  APP_NAME: jyhomeassistant
+  IMAGE_TAG: ${{ github.sha }}
+  # 選擇容器註冊表類型：dockerhub 或 acr
+  REGISTRY_TYPE: dockerhub
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      # 設置 Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      # 登入 Docker Hub (如果使用 Docker Hub)
+      - name: Log in to Docker Hub
+        if: ${{ env.REGISTRY_TYPE == 'dockerhub' }}
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      # 登入 Azure (如果使用 ACR)
+      - name: Log in to Azure
+        if: ${{ env.REGISTRY_TYPE == 'acr' }}
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      
+      # 登入 Azure Container Registry (如果使用 ACR)
+      - name: Log in to Azure Container Registry
+        if: ${{ env.REGISTRY_TYPE == 'acr' }}
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.ACR_NAME }}.azurecr.io
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+      
+      # 設置映像名稱變數
+      - name: Set Image Names
+        id: set-image-names
+        run: |
+          if [ "${{ env.REGISTRY_TYPE }}" = "dockerhub" ]; then
+            echo "FRONTEND_IMAGE=popo510691/homeassistant.front:${{ env.IMAGE_TAG }}" >> $GITHUB_ENV
+            echo "BACKEND_IMAGE=popo510691/homeassistant.backend:${{ env.IMAGE_TAG }}" >> $GITHUB_ENV
+          else
+            echo "FRONTEND_IMAGE=${{ secrets.ACR_NAME }}.azurecr.io/smarthomeassistantweb-frontend:${{ env.IMAGE_TAG }}" >> $GITHUB_ENV
+            echo "BACKEND_IMAGE=${{ secrets.ACR_NAME }}.azurecr.io/smarthomeassistantweb-backend:${{ env.IMAGE_TAG }}" >> $GITHUB_ENV
+          fi
+      
+      # 構建並推送前端映像
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./frontend
+          file: ./docker/frontend.Dockerfile
+          push: true
+          tags: ${{ env.FRONTEND_IMAGE }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      # 構建並推送後端映像
+      - name: Build and push backend image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend
+          file: ./docker/backend.Dockerfile
+          push: true
+          tags: ${{ env.BACKEND_IMAGE }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+  
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      # 登入 Azure
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      
+      # 安裝 Azure CLI 容器應用擴充功能
+      - name: Install Azure CLI containerapp extension
+        run: |
+          az extension add --name containerapp --upgrade
+      
+      # 設置部署參數
+      - name: Set deployment parameters
+        id: set-params
+        run: |
+          if [ "${{ env.REGISTRY_TYPE }}" = "dockerhub" ]; then
+            echo "DEPLOY_SCRIPT=./infra/deploy.ps1" >> $GITHUB_ENV
+            echo "ADDITIONAL_PARAMS='-imageTag ${{ env.IMAGE_TAG }}'" >> $GITHUB_ENV
+          else
+            echo "DEPLOY_SCRIPT=./infra/deploy_with_acr.ps1" >> $GITHUB_ENV
+            echo "ADDITIONAL_PARAMS='-imageTag ${{ env.IMAGE_TAG }} -acrName ${{ secrets.ACR_NAME }} -acrPassword ${{ secrets.ACR_PASSWORD }}'" >> $GITHUB_ENV
+          fi
+      
+      # 部署至 Azure Container Apps
+      - name: Deploy to Azure Container Apps
+        run: |
+          pwsh -Command "${{ env.DEPLOY_SCRIPT }} -resourceGroupName '${{ env.AZURE_RESOURCE_GROUP }}' -location '${{ env.AZURE_LOCATION }}' -appName '${{ env.APP_NAME }}' -dbPassword '${{ secrets.DB_PASSWORD }}' ${{ env.ADDITIONAL_PARAMS }}"
+      
+      # 輸出部署結果
+      - name: Show deployment results
+        run: |
+          echo "應用已成功部署到 Azure Container Apps！"
+          echo "前端 URL: https://${{ env.APP_NAME }}-frontend.${{ env.AZURE_LOCATION }}.azurecontainerapps.io"
+          echo "後端 URL: https://${{ env.APP_NAME }}-backend.${{ env.AZURE_LOCATION }}.azurecontainerapps.io"

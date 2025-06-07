@@ -1,8 +1,5 @@
 @description('應用程式名稱')
-param appName string = 'jyhomeassistant'
-
-@description('資源組名稱')
-param resourceGroupName string = 'JYSmartHomeAssistant'
+param appName string = 'jyhomeapp'
 
 @description('資源部署的位置')
 param location string = resourceGroup().location
@@ -12,10 +9,14 @@ param imageVersion string = '1.0'
 
 @description('PostgreSQL 資料庫密碼')
 @secure()
-param dbPassword string = 'YourSecurePassword123!' // 個人使用場景下的預設密碼，生產環境中請更改
+param dbPassword string
 
-@description('環境變數')
-param environmentName string = 'dev'
+@description('Azure Container Registry 名稱')
+param acrName string
+
+@description('Azure Container Registry 密碼')
+@secure()
+param acrPassword string
 
 // 建立 Log Analytics 工作區以供監控
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
@@ -23,7 +24,7 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-06
   location: location
   properties: {
     sku: {
-      name: 'PerGB2018' // 按用量收費
+      name: 'PerGB2018'
     }
     retentionInDays: 30
   }
@@ -44,17 +45,18 @@ resource containerAppsEnvironment 'Microsoft.App/managedEnvironments@2022-06-01-
   }
 }
 
-// 建立 Container App - 前端
-resource frontendApp 'Microsoft.App/containerApps@2022-06-01-preview' = {
-  name: '${toLower(appName)}-frontend'
+// 建立 Container App - 資料庫
+resource dbApp 'Microsoft.App/containerApps@2022-06-01-preview' = {
+  name: '${toLower(appName)}-db'
   location: location
   properties: {
     managedEnvironmentId: containerAppsEnvironment.id
     configuration: {
       ingress: {
-        external: true
-        targetPort: 80
-        allowInsecure: false
+        external: false
+        targetPort: 5432
+        transport: 'http'
+        allowInsecure: true
         traffic: [
           {
             latestRevision: true
@@ -62,34 +64,51 @@ resource frontendApp 'Microsoft.App/containerApps@2022-06-01-preview' = {
           }
         ]
       }
-      // 使用 Docker Hub，不需要認證
       registries: []
-      secrets: []
+      secrets: [
+        {
+          name: 'db-password'
+          value: dbPassword
+        }
+      ]
     }
     template: {
-      containers: [        {
-          name: 'frontend'
-          image: 'popo510691/homeassistant.front:${imageVersion}'
+      containers: [
+        {
+          name: 'db'
+          image: 'postgres:14'
           env: [
             {
-              name: 'NODE_ENV'
-              value: 'production'
+              name: 'POSTGRES_DB'
+              value: 'smarthome'
             }
             {
-              name: 'BACKEND_URL'
-              value: 'https://${backendApp.properties.configuration.ingress.fqdn}'
+              name: 'POSTGRES_USER'
+              value: 'postgres'
+            }
+            {
+              name: 'POSTGRES_PASSWORD'
+              secretRef: 'db-password'
             }
           ]
-          resources: {
-            cpu: '0.5'
-            memory: '1Gi'
-          }
+          volumeMounts: [
+            {
+              mountPath: '/var/lib/postgresql/data'
+              volumeName: 'postgres-data'
+            }
+          ]
         }
       ]
       scale: {
         minReplicas: 1
-        maxReplicas: 1 // 個人使用不需要太多副本
+        maxReplicas: 1
       }
+      volumes: [
+        {
+          name: 'postgres-data'
+          storageType: 'EmptyDir'
+        }
+      ]
     }
   }
 }
@@ -112,12 +131,21 @@ resource backendApp 'Microsoft.App/containerApps@2022-06-01-preview' = {
           }
         ]
       }
-      // 使用 Docker Hub，不需要 ACR 認證
-      registries: []
+      registries: [
+        {
+          server: '${acrName}.azurecr.io'
+          username: acrName
+          passwordSecretRef: 'acr-password'
+        }
+      ]
       secrets: [
         {
           name: 'db-password'
           value: dbPassword
+        }
+        {
+          name: 'acr-password'
+          value: acrPassword
         }
       ]
     }
@@ -125,11 +153,11 @@ resource backendApp 'Microsoft.App/containerApps@2022-06-01-preview' = {
       containers: [
         {
           name: 'backend'
-          image: 'popo510691/homeassistant.backend:${imageVersion}'
+          image: '${acrName}.azurecr.io/smarthomeassistantweb-backend:${imageVersion}'
           env: [
             {
               name: 'DATABASE_URL'
-              value: 'postgresql://postgres:${dbPassword}@${dbApp.properties.configuration.ingress.fqdn}:5432/smarthome'
+              value: 'postgresql://postgres:${dbPassword}@${dbApp.name}.${containerAppsEnvironment.properties.defaultDomain}:5432/smarthome'
             }
             {
               name: 'DATABASE_HOST'
@@ -166,90 +194,16 @@ resource backendApp 'Microsoft.App/containerApps@2022-06-01-preview' = {
   }
 }
 
-// 建立 Container App - 資料庫
-resource dbApp 'Microsoft.App/containerApps@2022-06-01-preview' = {
-  name: '${toLower(appName)}-db'
-  location: location
-  properties: {
-    managedEnvironmentId: containerAppsEnvironment.id
-    configuration: {
-      ingress: {
-        external: false // 內部服務，不需要外部存取
-        targetPort: 5432
-        transport: 'http'
-        allowInsecure: true
-        traffic: [
-          {
-            latestRevision: true
-            weight: 100
-          }
-        ]
-      }
-      // 使用 Docker Hub 上的官方 postgres 映像，不需要認證
-      registries: []
-      secrets: [
-        {
-          name: 'db-password'
-          value: dbPassword
-        }
-      ]
-    }
-    template: {
-      containers: [
-        {
-          name: 'db'
-          image: 'postgres:14'
-          env: [
-            {
-              name: 'POSTGRES_DB'
-              value: 'smarthome'
-            }
-            {
-              name: 'POSTGRES_PASSWORD'
-              secretRef: 'db-password'
-            }
-            {
-              name: 'POSTGRES_USER'
-              value: 'postgres'
-            }
-          ]
-          resources: {
-            cpu: '0.5'
-            memory: '1Gi'
-          }
-          volumeMounts: [
-            {
-              mountPath: '/var/lib/postgresql/data'
-              volumeName: 'postgres-data'
-            }
-          ]
-        }
-      ]
-      scale: {
-        minReplicas: 1
-        maxReplicas: 1
-      }
-      volumes: [
-        {
-          name: 'postgres-data'
-          storageType: 'EmptyDir'
-        }
-      ]
-    }
-  }
-}
-
-/* 
-// 建立 Container App - LineBot (暫時註解掉，不部署LineBot)
-resource linebotApp 'Microsoft.App/containerApps@2022-06-01-preview' = {
-  name: '${toLower(appName)}-linebot'
+// 建立 Container App - 前端
+resource frontendApp 'Microsoft.App/containerApps@2022-06-01-preview' = {
+  name: '${toLower(appName)}-frontend'
   location: location
   properties: {
     managedEnvironmentId: containerAppsEnvironment.id
     configuration: {
       ingress: {
         external: true
-        targetPort: 5000
+        targetPort: 80
         allowInsecure: false
         traffic: [
           {
@@ -258,18 +212,32 @@ resource linebotApp 'Microsoft.App/containerApps@2022-06-01-preview' = {
           }
         ]
       }
-      // 使用 Docker Hub，不需要認證
-      registries: []
-      secrets: []
+      registries: [
+        {
+          server: '${acrName}.azurecr.io'
+          username: acrName
+          passwordSecretRef: 'acr-password'
+        }
+      ]
+      secrets: [
+        {
+          name: 'acr-password'
+          value: acrPassword
+        }
+      ]
     }
     template: {
       containers: [
         {
-          name: 'linebot'
-          image: 'popo510691/homeassistant.linebot:${imageVersion}'
+          name: 'frontend'
+          image: '${acrName}.azurecr.io/smarthomeassistantweb-frontend:${imageVersion}'
           env: [
             {
-              name: 'BACKEND_URL'
+              name: 'NODE_ENV'
+              value: 'production'
+            }
+            {
+              name: 'API_URL'
               value: 'https://${backendApp.properties.configuration.ingress.fqdn}'
             }
           ]
@@ -286,8 +254,6 @@ resource linebotApp 'Microsoft.App/containerApps@2022-06-01-preview' = {
     }
   }
 }
-*/
 
 output frontendUrl string = 'https://${frontendApp.properties.configuration.ingress.fqdn}'
 output backendUrl string = 'https://${backendApp.properties.configuration.ingress.fqdn}'
-// output linebotUrl string = 'https://${linebotApp.properties.configuration.ingress.fqdn}'  // 暫時註解掉LineBot輸出

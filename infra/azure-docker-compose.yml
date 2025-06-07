@@ -2,7 +2,7 @@ version: '3.4'
 
 services:
   frontend:
-    image: ${DOCKER_REGISTRY_SERVER_URL}/smarthomeassistantweb-frontend:1.0
+    image: popo510691/homeassistant.front:1.0
     container_name: frontend
     restart: always
     ports:
@@ -11,10 +11,10 @@ services:
       - backend
     environment:
       - NODE_ENV=production
-      - API_URL=http://backend:8000
+      - BACKEND_URL=http://backend:8000
 
   backend:
-    image: ${DOCKER_REGISTRY_SERVER_URL}/smarthomeassistantweb-backend:1.0
+    image: popo510691/homeassistant.backend:1.0
     container_name: backend
     restart: always
     ports:
@@ -30,7 +30,7 @@ services:
       - db
 
   db:
-    image: postgres:1.0
+    image: postgres:14
     container_name: db
     restart: always
     environment:
@@ -43,7 +43,7 @@ services:
       - postgres-data:/var/lib/postgresql/data
 
   linebot:
-    image: ${DOCKER_REGISTRY_SERVER_URL}/smarthomeassistantweb-linebot:1.0
+    image: popo510691/homeassistant.linebot:1.0
     container_name: linebot
     restart: always
     ports:

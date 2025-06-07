@@ -11,7 +11,7 @@ services:
       - backend
     environment:
       - NODE_ENV=production
-      - API_URL=http://backend:8000
+      # No BACKEND_URL needed for local Docker Compose - will use default config
 
   backend:
     build:
@@ -24,7 +24,7 @@ services:
     depends_on:
       - db
     environment:
-      - DATABASE_URL=postgresql://postgres:password@db:5432/homeassistant
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/smarthome
       - ENVIRONMENT=development
 
   linebot:
