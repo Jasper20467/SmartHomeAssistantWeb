@@ -8,7 +8,7 @@ import { Schedule, ScheduleCreateDto, ScheduleUpdateDto } from '../models/schedu
   providedIn: 'root'
 })
 export class ScheduleService {
-  private apiUrl = `${environment.apiUrl}/schedules`;
+  private apiUrl = `${environment.apiUrl}/schedules/`;
 
   constructor(private http: HttpClient) {}
 
@@ -17,7 +17,7 @@ export class ScheduleService {
   }
 
   getSchedule(id: number): Observable<Schedule> {
-    return this.http.get<Schedule>(`${this.apiUrl}/${id}`);
+    return this.http.get<Schedule>(`${this.apiUrl}${id}`);
   }
 
   createSchedule(schedule: ScheduleCreateDto): Observable<Schedule> {
@@ -25,10 +25,10 @@ export class ScheduleService {
   }
 
   updateSchedule(id: number, schedule: ScheduleUpdateDto): Observable<Schedule> {
-    return this.http.put<Schedule>(`${this.apiUrl}/${id}`, schedule);
+    return this.http.put<Schedule>(`${this.apiUrl}${id}`, schedule);
   }
 
   deleteSchedule(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}${id}`);
   }
 }

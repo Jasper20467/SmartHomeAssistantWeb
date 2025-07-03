@@ -103,7 +103,15 @@ echo "檢查容器狀態..."
 docker-compose -f docker-compose_fromHub.yml ps
 
 # 顯示訪問信息
-PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
+# 使用 IMDSv2 安全地獲取 EC2 公共 IP
+TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" 2>/dev/null || echo "")
+if [ -n "$TOKEN" ]; then
+    PUBLIC_IP=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "")
+else
+    # 如果 IMDSv2 不可用，回退到直接方式或其他方法獲取 IP
+    PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || curl -s -4 ifconfig.me || curl -s -4 icanhazip.com || echo "無法確定 IP")
+fi
+
 echo ""
 echo "===================================================="
 echo "部署完成！您可以通過以下URL訪問服務："

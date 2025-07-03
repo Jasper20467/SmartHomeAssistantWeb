@@ -8,7 +8,7 @@ import { Consumable, ConsumableCreateDto, ConsumableUpdateDto } from '../models/
   providedIn: 'root'
 })
 export class ConsumableService {
-  private apiUrl = `${environment.apiUrl}/consumables`;
+  private apiUrl = `${environment.apiUrl}/consumables/`;
 
   constructor(private http: HttpClient) {}
 
@@ -17,7 +17,7 @@ export class ConsumableService {
   }
 
   getConsumable(id: number): Observable<Consumable> {
-    return this.http.get<Consumable>(`${this.apiUrl}/${id}`);
+    return this.http.get<Consumable>(`${this.apiUrl}${id}`);
   }
 
   createConsumable(consumable: ConsumableCreateDto): Observable<Consumable> {
@@ -25,10 +25,10 @@ export class ConsumableService {
   }
 
   updateConsumable(id: number, consumable: ConsumableUpdateDto): Observable<Consumable> {
-    return this.http.put<Consumable>(`${this.apiUrl}/${id}`, consumable);
+    return this.http.put<Consumable>(`${this.apiUrl}${id}`, consumable);
   }
 
   deleteConsumable(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}${id}`);
   }
 }
