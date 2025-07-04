@@ -153,3 +153,6 @@ docs/_build/
 
 # PyCharm
 .idea/
+
+# db
+docker-entrypoint-initdb.d/
