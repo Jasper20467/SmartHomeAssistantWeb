@@ -32,16 +32,101 @@
       </div>
       
       <div class="form-group">
-        <label for="start_time">開始時間</label>
-        <input type="datetime-local" id="start_time" formControlName="start_time" class="form-control">
-        <div *ngIf="scheduleForm.get('start_time')?.invalid && scheduleForm.get('start_time')?.touched" class="error-message">
-          開始時間為必填項目
+        <label>開始時間</label>
+        <div class="custom-datetime-picker">
+          <div class="datetime-row">
+            <div class="date-picker">
+              <label for="start_date">日期</label>
+              <input 
+                type="date" 
+                id="start_date" 
+                class="form-control"
+                [value]="getStartDate()"
+                (change)="onStartDateChange($event)"
+                placeholder="選擇日期">
+            </div>
+            <div class="time-picker">
+              <label for="start_hour">小時</label>
+              <select 
+                id="start_hour" 
+                class="form-control"
+                [value]="getStartHour()"
+                (change)="onStartHourChange($event)">
+                <option value="">選擇小時</option>
+                <option *ngFor="let hour of hours" [value]="hour">{{ hour.toString().padStart(2, '0') }}</option>
+              </select>
+            </div>
+            <div class="minute-picker">
+              <label for="start_minute">分鐘</label>
+              <select 
+                id="start_minute" 
+                class="form-control"
+                [value]="getStartMinute()"
+                (change)="onStartMinuteChange($event)">
+                <option value="">選擇分鐘</option>
+                <option value="0">00</option>
+                <option value="30">30</option>
+              </select>
+            </div>
+          </div>
         </div>
+        <div *ngIf="scheduleForm.get('start_time')?.invalid && scheduleForm.get('start_time')?.touched" class="error-message">
+          <div *ngIf="scheduleForm.get('start_time')?.errors?.['required']">開始時間為必填項目</div>
+          <div *ngIf="scheduleForm.get('start_time')?.errors?.['timeInterval']">
+            {{ scheduleForm.get('start_time')?.errors?.['timeInterval'] }}
+          </div>
+        </div>
+        <small class="form-text text-muted">分鐘僅支援 00 或 30</small>
       </div>
       
       <div class="form-group">
-        <label for="end_time">結束時間</label>
-        <input type="datetime-local" id="end_time" formControlName="end_time" class="form-control">
+        <label>結束時間</label>
+        <div class="custom-datetime-picker">
+          <div class="datetime-row">
+            <div class="date-picker">
+              <label for="end_date">日期</label>
+              <input 
+                type="date" 
+                id="end_date" 
+                class="form-control"
+                [value]="getEndDate()"
+                (change)="onEndDateChange($event)"
+                placeholder="選擇日期">
+            </div>
+            <div class="time-picker">
+              <label for="end_hour">小時</label>
+              <select 
+                id="end_hour" 
+                class="form-control"
+                [value]="getEndHour()"
+                (change)="onEndHourChange($event)">
+                <option value="">選擇小時</option>
+                <option *ngFor="let hour of hours" [value]="hour">{{ hour.toString().padStart(2, '0') }}</option>
+              </select>
+            </div>
+            <div class="minute-picker">
+              <label for="end_minute">分鐘</label>
+              <select 
+                id="end_minute" 
+                class="form-control"
+                [value]="getEndMinute()"
+                (change)="onEndMinuteChange($event)">
+                <option value="">選擇分鐘</option>
+                <option value="0">00</option>
+                <option value="30">30</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="scheduleForm.get('end_time')?.invalid && scheduleForm.get('end_time')?.touched" class="error-message">
+          <div *ngIf="scheduleForm.get('end_time')?.errors?.['timeInterval']">
+            {{ scheduleForm.get('end_time')?.errors?.['timeInterval'] }}
+          </div>
+        </div>
+        <div *ngIf="scheduleForm.errors?.['endTimeBeforeStart']" class="error-message">
+          {{ scheduleForm.errors?.['endTimeBeforeStart'] }}
+        </div>
+        <small class="form-text text-muted">結束時間必須晚於開始時間，分鐘僅支援 00 或 30</small>
       </div>
       
       <div class="form-actions">

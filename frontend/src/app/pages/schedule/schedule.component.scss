@@ -97,6 +97,10 @@
   margin-top: 0.25rem;
 }
 
+.error-message div {
+  margin-bottom: 0.25rem;
+}
+
 .alert {
   padding: 1rem;
   margin-bottom: 1.5rem;
@@ -165,7 +169,163 @@
   gap: 0.5rem;
 }
 
-/* Mobile responsive */
+/* 時間輸入相關樣式 */
+.form-text {
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
+}
+
+.form-text.text-muted {
+  color: #6c757d !important;
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.error-message div {
+  margin-bottom: 0.25rem;
+}
+
+.form-control:invalid {
+  border-color: #dc3545;
+}
+
+.form-control:invalid:focus {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+/* 時間輸入框樣式優化 */
+input[type="datetime-local"] {
+  position: relative;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  background: transparent;
+  bottom: 0;
+  color: transparent;
+  cursor: pointer;
+  height: auto;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: auto;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* 強化時間輸入的視覺回饋 */
+.form-group input[type="datetime-local"] {
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.375rem;
+  transition: all 0.2s ease-in-out;
+  background-color: #fff;
+}
+
+.form-group input[type="datetime-local"]:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+  outline: none;
+}
+
+/* 時間選擇器的特殊樣式 */
+.form-group input[type="datetime-local"]:valid {
+  border-color: #10b981;
+}
+
+.form-group input[type="datetime-local"]:invalid {
+  border-color: #ef4444;
+  background-color: #fef2f2;
+}
+
+/* 時間輸入的特殊狀態 */
+.form-group input[type="datetime-local"].ng-touched.ng-invalid {
+  border-color: #ef4444;
+  background-color: #fef2f2;
+  animation: shake 0.3s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* 成功狀態的視覺反饋 */
+.form-group input[type="datetime-local"].ng-valid:not(.ng-pristine) {
+  border-color: #10b981;
+  background-color: #f0fdf4;
+}
+
+/* 時間輸入的加載狀態 */
+.form-group input[type="datetime-local"]:disabled {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* 特殊的時間輸入提示 */
+.form-group input[type="datetime-local"]::placeholder {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* 時間格式的視覺提示 */
+.form-group input[type="datetime-local"]:focus::before {
+  content: "僅支援 00 或 30 分鐘";
+  position: absolute;
+  top: -2rem;
+  left: 0;
+  font-size: 0.75rem;
+  color: #6b7280;
+  background: #f9fafb;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  z-index: 10;
+}
+
+/* 提示文字樣式 */
+.form-text.text-muted {
+  font-style: italic;
+  color: #6c757d !important;
+  font-size: 0.875rem;
+}
+
+/* 在使用者輸入時提供即時視覺反饋 */
+.form-group input[type="datetime-local"]:focus + .error-message {
+  display: none;
+}
+
+/* 增強錯誤訊息的可見性 */
+.error-message {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  margin-top: 0.25rem;
+  color: #721c24;
+  font-size: 0.875rem;
+}
+
+.error-message div:not(:last-child) {
+  margin-bottom: 0.25rem;
+}
+
+/* 手機版時間輸入優化 */
 @media (max-width: 768px) {
   .header-actions {
     flex-direction: column;
@@ -183,5 +343,214 @@
   
   .event-actions {
     align-self: flex-end;
+  }
+  
+  input[type="datetime-local"] {
+    font-size: 16px; /* 防止 iOS 縮放 */
+  }
+  
+  .form-text {
+    font-size: 0.75rem;
+  }
+  
+  .error-message {
+    font-size: 0.75rem;
+  }
+}
+
+/* 時間選擇器的增強控制 */
+.time-input-container {
+  position: relative;
+}
+
+/* 自定義時間選擇器樣式 */
+.custom-time-picker {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.5rem;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  background: white;
+  font-family: inherit;
+}
+
+.custom-time-picker select {
+  border: none;
+  background: none;
+  font-size: 1rem;
+  padding: 0.25rem;
+  font-family: inherit;
+}
+
+.custom-time-picker select:focus {
+  outline: none;
+  background-color: #f8f9fa;
+  border-radius: 0.25rem;
+}
+
+.time-separator {
+  font-weight: bold;
+  color: #6c757d;
+  margin: 0 0.25rem;
+}
+
+/* 隱藏原生時間選擇器的微調器 */
+input[type="datetime-local"]::-webkit-inner-spin-button,
+input[type="datetime-local"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox 的時間選擇器樣式 */
+input[type="datetime-local"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* 確保時間輸入的一致性 */
+.datetime-input-enhanced {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 自定義時間選擇器樣式 */
+.custom-datetime-picker {
+  width: 100%;
+  
+  .datetime-row {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    
+    @media (max-width: 768px) {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+  }
+  
+  .date-picker,
+  .time-picker,
+  .minute-picker {
+    flex: 1;
+    min-width: 0;
+    
+    label {
+      display: block;
+      font-size: 0.875rem;
+      color: #6c757d;
+      margin-bottom: 0.25rem;
+      font-weight: 500;
+    }
+    
+    input,
+    select {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+      
+      &:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+      
+      &:hover {
+        border-color: #9ca3af;
+      }
+    }
+    
+    select {
+      cursor: pointer;
+      background-color: white;
+      
+      option {
+        padding: 0.5rem;
+      }
+    }
+  }
+  
+  .date-picker {
+    flex: 2;
+    min-width: 150px;
+    
+    @media (max-width: 768px) {
+      min-width: 100%;
+    }
+  }
+  
+  .time-picker {
+    flex: 1;
+    min-width: 80px;
+    
+    @media (max-width: 768px) {
+      min-width: 100%;
+    }
+  }
+  
+  .minute-picker {
+    flex: 1;
+    min-width: 80px;
+    
+    @media (max-width: 768px) {
+      min-width: 100%;
+    }
+    
+    select {
+      font-weight: 600;
+      color: #1f2937;
+    }
+  }
+}
+
+/* 當表單驗證失敗時的樣式 */
+.form-group.ng-invalid .custom-datetime-picker {
+  .date-picker input,
+  .time-picker select,
+  .minute-picker select {
+    border-color: #ef4444;
+    
+    &:focus {
+      border-color: #ef4444;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+  }
+}
+
+/* 強調分鐘選擇器的特殊樣式 */
+.minute-picker select {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border: 2px solid #cbd5e1;
+  font-weight: 600;
+  
+  &:focus {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border-color: #3b82f6;
+  }
+  
+  option {
+    background: white;
+    color: #1f2937;
+    font-weight: 600;
+  }
+}
+
+/* 響應式調整 */
+@media (max-width: 640px) {
+  .custom-datetime-picker {
+    .datetime-row {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .date-picker,
+    .time-picker,
+    .minute-picker {
+      width: 100%;
+    }
   }
 }

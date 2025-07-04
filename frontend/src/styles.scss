@@ -241,6 +241,8 @@ body {
   overflow: hidden;
   width: 100%;
   max-width: 100%;
+  box-sizing: border-box;
+  position: relative; /* 確保定位正確 */
 }
 
 .calendar-header {
@@ -257,10 +259,12 @@ body {
   display: -ms-grid;
   display: grid;
   -ms-grid-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr)); /* 使用 minmax 確保等寬 */
   gap: 1px;
   background-color: #e5e7eb;
   padding: 1px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* IE11 Grid 支援 */
@@ -284,12 +288,14 @@ body {
   .calendar-grid {
     display: flex;
     flex-wrap: wrap;
+    width: 100%;
   }
   
   .day-header,
   .calendar-date {
     flex: 1;
     min-width: calc(100% / 7);
+    max-width: calc(100% / 7); /* 限制最大寬度 */
     box-sizing: border-box;
   }
 }
@@ -300,6 +306,8 @@ body {
   gap: 1px;
   background-color: #e5e7eb;
   padding: 1px;
+  width: 100%;
+  table-layout: fixed; /* 固定表格布局 */
 }
 
 .day-header {
@@ -309,17 +317,25 @@ body {
   font-weight: 600;
   color: #4b5563;
   font-size: 0.875rem;
+  width: 100%;
+  min-width: 0; /* 允許 flexbox 壓縮 */
+  box-sizing: border-box;
 }
 
 .calendar-date {
   background: white;
   min-height: 120px;
+  max-height: 120px; /* 限制最大高度 */
   padding: 0.5rem;
   cursor: pointer;
   transition: all 0.2s;
   position: relative;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  min-width: 0; /* 允許 flexbox 壓縮 */
+  box-sizing: border-box;
+  overflow: hidden; /* 防止內容溢出 */
 }
 
 .calendar-date:hover {
@@ -357,6 +373,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  overflow: hidden; /* 防止內容溢出 */
+  min-height: 0; /* 允許 flexbox 壓縮 */
 }
 
 .schedule-indicator {
@@ -371,6 +389,9 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%; /* 確保不會超出父容器 */
+  min-width: 0; /* 允許 flexbox 壓縮 */
+  flex-shrink: 0; /* 防止被壓縮得太小 */
 }
 
 .schedule-indicator:hover {
@@ -409,7 +430,9 @@ body {
   
   .calendar-date {
     min-height: 80px;
+    max-height: 80px; /* 手機版限制高度 */
     padding: 0.25rem;
+    overflow: hidden; /* 防止內容溢出 */
   }
   
   .date-number {

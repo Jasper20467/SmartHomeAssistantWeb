@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Schedule, ScheduleCreateDto } from '../../shared/models/schedule.model';
 import { ScheduleService } from '../../shared/services/schedule.service';
@@ -20,6 +20,9 @@ export class ScheduleComponent implements OnInit {
   isCalendarView = true; // Default to calendar view
   selectedDate: Date | null = null;
   selectedDateSchedules: Schedule[] = [];
+  
+  // Hours array for dropdown (0-23)
+  hours: number[] = Array.from({length: 24}, (_, i) => i);
 
   constructor(
     private scheduleService: ScheduleService,
@@ -29,9 +32,9 @@ export class ScheduleComponent implements OnInit {
     this.scheduleForm = this.fb.group({
       title: ['', [Validators.required]],
       description: [''],
-      start_time: ['', [Validators.required]],
-      end_time: ['']
-    });
+      start_time: ['', [Validators.required, this.timeIntervalValidator]],
+      end_time: ['', [this.timeIntervalValidator]]
+    }, { validators: this.endTimeAfterStartTimeValidator });
   }
 
   ngOnInit(): void {
@@ -117,11 +120,15 @@ export class ScheduleComponent implements OnInit {
       const startTime = new Date(schedule.start_time);
       const endTime = schedule.end_time ? new Date(schedule.end_time) : null;
       
+      // Round times to nearest 30 minutes for consistency
+      const roundedStartTime = this.roundToNearestHalfHour(startTime.toISOString().slice(0, 16));
+      const roundedEndTime = endTime ? this.roundToNearestHalfHour(endTime.toISOString().slice(0, 16)) : '';
+      
       this.scheduleForm.patchValue({
         title: schedule.title,
         description: schedule.description,
-        start_time: this.formatDateForInput(startTime),
-        end_time: endTime ? this.formatDateForInput(endTime) : ''
+        start_time: roundedStartTime,
+        end_time: roundedEndTime
       });
     }
   }
@@ -152,7 +159,40 @@ export class ScheduleComponent implements OnInit {
       this.resetForm();
     } else {
       this.showForm = true;
+      
+      // Set default times when creating new schedule
+      if (!this.editingScheduleId) {
+        this.setDefaultTimes();
+      }
     }
+  }
+
+  // Set default times to nearest half hour
+  private setDefaultTimes(): void {
+    const now = new Date();
+    
+    // Round current time to next half hour
+    const currentMinutes = now.getMinutes();
+    if (currentMinutes <= 30) {
+      now.setMinutes(30);
+    } else {
+      now.setMinutes(0);
+      now.setHours(now.getHours() + 1);
+    }
+    now.setSeconds(0);
+    now.setMilliseconds(0);
+    
+    const startTime = now.toISOString().slice(0, 16);
+    
+    // Set end time to 1 hour after start time
+    const endTime = new Date(now);
+    endTime.setHours(endTime.getHours() + 1);
+    const endTimeString = endTime.toISOString().slice(0, 16);
+    
+    this.scheduleForm.patchValue({
+      start_time: startTime,
+      end_time: endTimeString
+    });
   }
 
   toggleView(): void {
@@ -169,9 +209,28 @@ export class ScheduleComponent implements OnInit {
     // Auto-fill form with selected date if adding new schedule
     if (this.showForm && !this.editingScheduleId) {
       const selectedDateTime = new Date(date);
-      selectedDateTime.setHours(9, 0, 0, 0); // Default to 9:00 AM
+      
+      // Set to next available half hour
+      const now = new Date();
+      const currentMinutes = now.getMinutes();
+      
+      if (currentMinutes <= 30) {
+        selectedDateTime.setHours(now.getHours(), 30, 0, 0);
+      } else {
+        selectedDateTime.setHours(now.getHours() + 1, 0, 0, 0);
+      }
+      
+      // If selected date is different from today, default to 9:00 AM
+      if (!this.isSameDay(date, now)) {
+        selectedDateTime.setHours(9, 0, 0, 0);
+      }
+      
+      const endDateTime = new Date(selectedDateTime);
+      endDateTime.setHours(endDateTime.getHours() + 1);
+      
       this.scheduleForm.patchValue({
-        start_time: this.formatDateForInput(selectedDateTime)
+        start_time: this.formatDateForInput(selectedDateTime),
+        end_time: this.formatDateForInput(endDateTime)
       });
     }
   }
@@ -189,5 +248,438 @@ export class ScheduleComponent implements OnInit {
   // Helper to format date for datetime-local input
   private formatDateForInput(date: Date): string {
     return date.toISOString().slice(0, 16);
+  }
+
+  // Custom validator to ensure time intervals are 30 minutes (00 or 30 only)
+  private timeIntervalValidator(control: AbstractControl): ValidationErrors | null {
+    if (!control.value) {
+      return null;
+    }
+    
+    const dateTime = new Date(control.value);
+    const minutes = dateTime.getMinutes();
+    
+    if (minutes !== 0 && minutes !== 30) {
+      return { timeInterval: '請選擇整點或半點時間（例如：09:00 或 09:30）' };
+    }
+    
+    return null;
+  }
+
+  // Custom validator to ensure end time is after start time
+  private endTimeAfterStartTimeValidator(formGroup: AbstractControl): ValidationErrors | null {
+    const startTime = formGroup.get('start_time')?.value;
+    const endTime = formGroup.get('end_time')?.value;
+    
+    if (!startTime || !endTime) {
+      return null; // Don't validate if either is empty
+    }
+    
+    const startDate = new Date(startTime);
+    const endDate = new Date(endTime);
+    
+    if (endDate <= startDate) {
+      return { endTimeBeforeStart: '結束時間必須晚於開始時間' };
+    }
+    
+    return null;
+  }
+
+  // Helper to round time to nearest 30 minutes (00 or 30 only)
+  private roundToNearestHalfHour(dateTimeString: string): string {
+    const date = new Date(dateTimeString);
+    const minutes = date.getMinutes();
+    
+    // Force to 00 or 30 minutes only
+    if (minutes <= 15) {
+      date.setMinutes(0);
+    } else if (minutes <= 45) {
+      date.setMinutes(30);
+    } else {
+      date.setMinutes(0);
+      date.setHours(date.getHours() + 1);
+    }
+    
+    date.setSeconds(0);
+    date.setMilliseconds(0);
+    
+    return date.toISOString().slice(0, 16);
+  }
+
+  // Get minimum end time based on start time (at least 30 minutes after start)
+  getMinEndTime(): string {
+    const startTime = this.scheduleForm.get('start_time')?.value;
+    if (!startTime) {
+      return '';
+    }
+    
+    const startDate = new Date(startTime);
+    startDate.setMinutes(startDate.getMinutes() + 30);
+    
+    return startDate.toISOString().slice(0, 16);
+  }
+
+  // Handle start time blur event to round to nearest 30 minutes
+  onStartTimeBlur(): void {
+    const startTimeControl = this.scheduleForm.get('start_time');
+    if (startTimeControl?.value) {
+      const roundedTime = this.roundToNearestHalfHour(startTimeControl.value);
+      startTimeControl.setValue(roundedTime);
+      
+      // Update end time min constraint
+      const endTimeControl = this.scheduleForm.get('end_time');
+      if (endTimeControl?.value) {
+        const endTime = new Date(endTimeControl.value);
+        const startTime = new Date(roundedTime);
+        
+        // If end time is now before start time, adjust it
+        if (endTime <= startTime) {
+          const newEndTime = new Date(startTime);
+          newEndTime.setMinutes(newEndTime.getMinutes() + 30);
+          endTimeControl.setValue(newEndTime.toISOString().slice(0, 16));
+        }
+      }
+    }
+  }
+
+  // Handle end time blur event to round to nearest 30 minutes
+  onEndTimeBlur(): void {
+    const endTimeControl = this.scheduleForm.get('end_time');
+    if (endTimeControl?.value) {
+      const roundedTime = this.roundToNearestHalfHour(endTimeControl.value);
+      endTimeControl.setValue(roundedTime);
+      
+      // Ensure end time is still after start time
+      const startTime = this.scheduleForm.get('start_time')?.value;
+      if (startTime) {
+        const startDate = new Date(startTime);
+        const endDate = new Date(roundedTime);
+        
+        if (endDate <= startDate) {
+          const newEndTime = new Date(startDate);
+          newEndTime.setMinutes(newEndTime.getMinutes() + 30);
+          endTimeControl.setValue(newEndTime.toISOString().slice(0, 16));
+        }
+      }
+    }
+  }
+
+  // Handle time input change to enforce 30-minute intervals
+  onStartTimeChange(event: any): void {
+    const value = event.target.value;
+    if (value) {
+      const roundedTime = this.roundToNearestHalfHour(value);
+      this.scheduleForm.get('start_time')?.setValue(roundedTime, { emitEvent: false });
+    }
+  }
+
+  // Handle end time input change to enforce 30-minute intervals
+  onEndTimeChange(event: any): void {
+    const value = event.target.value;
+    if (value) {
+      const roundedTime = this.roundToNearestHalfHour(value);
+      this.scheduleForm.get('end_time')?.setValue(roundedTime, { emitEvent: false });
+      
+      // Ensure end time is still after start time
+      const startTime = this.scheduleForm.get('start_time')?.value;
+      if (startTime) {
+        const startDate = new Date(startTime);
+        const endDate = new Date(roundedTime);
+        
+        if (endDate <= startDate) {
+          const newEndTime = new Date(startDate);
+          newEndTime.setMinutes(newEndTime.getMinutes() + 30);
+          this.scheduleForm.get('end_time')?.setValue(newEndTime.toISOString().slice(0, 16), { emitEvent: false });
+        }
+      }
+    }
+  }
+
+  // Enhanced input event handler for strict minute control
+  onTimeInput(event: any, isStartTime: boolean = true): void {
+    const input = event.target;
+    const value = input.value;
+    
+    if (value && value.length >= 16) { // Full datetime-local format
+      const date = new Date(value);
+      const minutes = date.getMinutes();
+      
+      // Force to 00 or 30 minutes immediately
+      if (minutes !== 0 && minutes !== 30) {
+        const roundedTime = this.roundToNearestHalfHour(value);
+        
+        if (isStartTime) {
+          this.scheduleForm.get('start_time')?.setValue(roundedTime, { emitEvent: false });
+        } else {
+          this.scheduleForm.get('end_time')?.setValue(roundedTime, { emitEvent: false });
+        }
+        
+        // Update the input value directly
+        input.value = roundedTime;
+      }
+    }
+  }
+
+  // Enhanced keyboard event handler to restrict minute inputs more strictly
+  onTimeKeydown(event: KeyboardEvent): void {
+    const input = event.target as HTMLInputElement;
+    const value = input.value;
+    const selectionStart = input.selectionStart || 0;
+    const key = event.key;
+    
+    // Allow navigation and control keys
+    if (['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Enter', 'Escape'].includes(key)) {
+      return;
+    }
+    
+    // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+    if (event.ctrlKey && ['a', 'c', 'v', 'x'].includes(key.toLowerCase())) {
+      return;
+    }
+    
+    // Check if we're in the minutes section (positions 14-15 in YYYY-MM-DDTHH:MM)
+    if (selectionStart >= 14 && selectionStart <= 15) {
+      // For minute input, only allow specific combinations
+      if (selectionStart === 14) {
+        // First digit of minutes: only allow 0, 3
+        if (!['0', '3'].includes(key)) {
+          event.preventDefault();
+          return;
+        }
+      } else if (selectionStart === 15) {
+        // Second digit of minutes
+        const firstMinuteDigit = value.charAt(14);
+        if (firstMinuteDigit === '0' && key !== '0') {
+          event.preventDefault(); // Only 00 allowed
+          return;
+        } else if (firstMinuteDigit === '3' && key !== '0') {
+          event.preventDefault(); // Only 30 allowed
+          return;
+        }
+      }
+    }
+    
+    // For other positions, allow numeric input
+    if (!/[0-9]/.test(key)) {
+      event.preventDefault();
+    }
+  }
+
+  // ===== Custom DateTime Picker Methods =====
+  
+  // Get start date value for date input
+  getStartDate(): string {
+    const startTime = this.scheduleForm.get('start_time')?.value;
+    if (!startTime) return '';
+    
+    const date = new Date(startTime);
+    return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+  }
+  
+  // Get start hour value for hour select
+  getStartHour(): string {
+    const startTime = this.scheduleForm.get('start_time')?.value;
+    if (!startTime) return '';
+    
+    const date = new Date(startTime);
+    return date.getHours().toString();
+  }
+  
+  // Get start minute value for minute select
+  getStartMinute(): string {
+    const startTime = this.scheduleForm.get('start_time')?.value;
+    if (!startTime) return '';
+    
+    const date = new Date(startTime);
+    return date.getMinutes().toString();
+  }
+  
+  // Get end date value for date input
+  getEndDate(): string {
+    const endTime = this.scheduleForm.get('end_time')?.value;
+    if (!endTime) return '';
+    
+    const date = new Date(endTime);
+    return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+  }
+  
+  // Get end hour value for hour select
+  getEndHour(): string {
+    const endTime = this.scheduleForm.get('end_time')?.value;
+    if (!endTime) return '';
+    
+    const date = new Date(endTime);
+    return date.getHours().toString();
+  }
+  
+  // Get end minute value for minute select
+  getEndMinute(): string {
+    const endTime = this.scheduleForm.get('end_time')?.value;
+    if (!endTime) return '';
+    
+    const date = new Date(endTime);
+    return date.getMinutes().toString();
+  }
+  
+  // Handle start date change
+  onStartDateChange(event: any): void {
+    const dateValue = event.target.value;
+    if (!dateValue) return;
+    
+    const currentStartTime = this.scheduleForm.get('start_time')?.value;
+    let hour = 9; // Default to 9 AM
+    let minute = 0; // Default to 00
+    
+    if (currentStartTime) {
+      const currentDate = new Date(currentStartTime);
+      hour = currentDate.getHours();
+      minute = currentDate.getMinutes();
+    }
+    
+    const newDateTime = new Date(dateValue);
+    newDateTime.setHours(hour, minute, 0, 0);
+    
+    this.scheduleForm.get('start_time')?.setValue(newDateTime.toISOString().slice(0, 16));
+    this.validateAndUpdateEndTime();
+  }
+  
+  // Handle start hour change
+  onStartHourChange(event: any): void {
+    const hourValue = parseInt(event.target.value);
+    if (isNaN(hourValue)) return;
+    
+    const currentStartTime = this.scheduleForm.get('start_time')?.value;
+    let date = new Date();
+    let minute = 0;
+    
+    if (currentStartTime) {
+      date = new Date(currentStartTime);
+      minute = date.getMinutes();
+    }
+    
+    date.setHours(hourValue, minute, 0, 0);
+    
+    this.scheduleForm.get('start_time')?.setValue(date.toISOString().slice(0, 16));
+    this.validateAndUpdateEndTime();
+  }
+  
+  // Handle start minute change
+  onStartMinuteChange(event: any): void {
+    const minuteValue = parseInt(event.target.value);
+    if (isNaN(minuteValue)) return;
+    
+    const currentStartTime = this.scheduleForm.get('start_time')?.value;
+    let date = new Date();
+    
+    if (currentStartTime) {
+      date = new Date(currentStartTime);
+    }
+    
+    date.setMinutes(minuteValue, 0, 0);
+    
+    this.scheduleForm.get('start_time')?.setValue(date.toISOString().slice(0, 16));
+    this.validateAndUpdateEndTime();
+  }
+  
+  // Handle end date change
+  onEndDateChange(event: any): void {
+    const dateValue = event.target.value;
+    if (!dateValue) return;
+    
+    const currentEndTime = this.scheduleForm.get('end_time')?.value;
+    let hour = 10; // Default to 10 AM
+    let minute = 0; // Default to 00
+    
+    if (currentEndTime) {
+      const currentDate = new Date(currentEndTime);
+      hour = currentDate.getHours();
+      minute = currentDate.getMinutes();
+    }
+    
+    const newDateTime = new Date(dateValue);
+    newDateTime.setHours(hour, minute, 0, 0);
+    
+    this.scheduleForm.get('end_time')?.setValue(newDateTime.toISOString().slice(0, 16));
+    this.validateEndTimeAfterStart();
+  }
+  
+  // Handle end hour change
+  onEndHourChange(event: any): void {
+    const hourValue = parseInt(event.target.value);
+    if (isNaN(hourValue)) return;
+    
+    const currentEndTime = this.scheduleForm.get('end_time')?.value;
+    let date = new Date();
+    let minute = 0;
+    
+    if (currentEndTime) {
+      date = new Date(currentEndTime);
+      minute = date.getMinutes();
+    }
+    
+    date.setHours(hourValue, minute, 0, 0);
+    
+    this.scheduleForm.get('end_time')?.setValue(date.toISOString().slice(0, 16));
+    this.validateEndTimeAfterStart();
+  }
+  
+  // Handle end minute change
+  onEndMinuteChange(event: any): void {
+    const minuteValue = parseInt(event.target.value);
+    if (isNaN(minuteValue)) return;
+    
+    const currentEndTime = this.scheduleForm.get('end_time')?.value;
+    let date = new Date();
+    
+    if (currentEndTime) {
+      date = new Date(currentEndTime);
+    }
+    
+    date.setMinutes(minuteValue, 0, 0);
+    
+    this.scheduleForm.get('end_time')?.setValue(date.toISOString().slice(0, 16));
+    this.validateEndTimeAfterStart();
+  }
+  
+  // Validate and update end time when start time changes
+  private validateAndUpdateEndTime(): void {
+    const startTime = this.scheduleForm.get('start_time')?.value;
+    const endTime = this.scheduleForm.get('end_time')?.value;
+    
+    if (startTime && endTime) {
+      const startDate = new Date(startTime);
+      const endDate = new Date(endTime);
+      
+      // If end time is before or equal to start time, update it
+      if (endDate <= startDate) {
+        const newEndTime = new Date(startDate);
+        newEndTime.setMinutes(newEndTime.getMinutes() + 30);
+        this.scheduleForm.get('end_time')?.setValue(newEndTime.toISOString().slice(0, 16));
+      }
+    } else if (startTime && !endTime) {
+      // If no end time set, default to 1 hour after start
+      const startDate = new Date(startTime);
+      const defaultEndTime = new Date(startDate);
+      defaultEndTime.setHours(defaultEndTime.getHours() + 1);
+      this.scheduleForm.get('end_time')?.setValue(defaultEndTime.toISOString().slice(0, 16));
+    }
+  }
+  
+  // Validate that end time is after start time
+  private validateEndTimeAfterStart(): void {
+    const startTime = this.scheduleForm.get('start_time')?.value;
+    const endTime = this.scheduleForm.get('end_time')?.value;
+    
+    if (startTime && endTime) {
+      const startDate = new Date(startTime);
+      const endDate = new Date(endTime);
+      
+      // If end time is before or equal to start time, adjust it
+      if (endDate <= startDate) {
+        const newEndTime = new Date(startDate);
+        newEndTime.setMinutes(newEndTime.getMinutes() + 30);
+        this.scheduleForm.get('end_time')?.setValue(newEndTime.toISOString().slice(0, 16));
+      }
+    }
   }
 }
