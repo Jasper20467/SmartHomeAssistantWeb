@@ -1,0 +1,45 @@
+<div class="calendar-container">
+  <!-- Calendar Header -->
+  <div class="calendar-header">
+    <button class="btn-nav" (click)="previousMonth()">‹</button>
+    <h2 class="month-year">{{ currentMonthYear }}</h2>
+    <button class="btn-nav" (click)="nextMonth()">›</button>
+    <button class="btn-today" (click)="goToToday()">今天</button>
+  </div>
+
+  <!-- Calendar Grid -->
+  <div class="calendar-grid">
+    <!-- Day headers -->
+    <div class="day-header" *ngFor="let day of dayNames">
+      {{ day }}
+    </div>
+
+    <!-- Calendar dates -->
+    <div 
+      class="calendar-date" 
+      *ngFor="let calendarDate of calendarDates"
+      [class.other-month]="!calendarDate.isCurrentMonth"
+      [class.today]="calendarDate.isToday"
+      [class.selected]="calendarDate.isSelected"
+      [class.has-events]="calendarDate.schedules.length > 0"
+      (click)="onDateClick(calendarDate)">
+      
+      <div class="date-number">{{ calendarDate.date.getDate() }}</div>
+      
+      <!-- Schedule indicators -->
+      <div class="schedule-indicators" *ngIf="calendarDate.schedules.length > 0">
+        <div 
+          class="schedule-indicator" 
+          *ngFor="let schedule of calendarDate.schedules; let i = index"
+          [class.more-indicator]="i >= 2"
+          [title]="schedule.title"
+          (click)="onScheduleClick(schedule, $event)">
+          <span *ngIf="i < 2">{{ schedule.title }}</span>
+          <span *ngIf="i === 2 && calendarDate.schedules.length > 2">
+            +{{ calendarDate.schedules.length - 2 }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

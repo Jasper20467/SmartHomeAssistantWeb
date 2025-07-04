@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { Schedule, ScheduleCreateDto } from '../../shared/models/schedule.model';
 import { ScheduleService } from '../../shared/services/schedule.service';
 
@@ -16,10 +17,14 @@ export class ScheduleComponent implements OnInit {
   editingScheduleId: number | null = null;
   showForm = false;
   error: string | null = null;
+  isCalendarView = true; // Default to calendar view
+  selectedDate: Date | null = null;
+  selectedDateSchedules: Schedule[] = [];
 
   constructor(
     private scheduleService: ScheduleService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private route: ActivatedRoute
   ) {
     this.scheduleForm = this.fb.group({
       title: ['', [Validators.required]],
@@ -37,12 +42,24 @@ export class ScheduleComponent implements OnInit {
     this.isLoading = true;
     this.scheduleService.getSchedules().subscribe({
       next: (data) => {
-        this.schedules = data;
+        this.schedules = data || []; // Ensure it's always an array
         this.isLoading = false;
+        
+        // Check for edit parameter from dashboard after schedules are loaded
+        this.route.queryParams.subscribe(params => {
+          if (params['edit']) {
+            const scheduleId = parseInt(params['edit']);
+            const schedule = this.schedules.find(s => s.id === scheduleId);
+            if (schedule) {
+              this.editSchedule(schedule);
+            }
+          }
+        });
       },
       error: (error) => {
         console.error('Error loading schedules', error);
         this.error = '無法載入行事曆資料';
+        this.schedules = []; // Set empty array on error
         this.isLoading = false;
       }
     });
@@ -136,6 +153,37 @@ export class ScheduleComponent implements OnInit {
     } else {
       this.showForm = true;
     }
+  }
+
+  toggleView(): void {
+    this.isCalendarView = !this.isCalendarView;
+  }
+
+  onDateSelected(date: Date): void {
+    this.selectedDate = date;
+    this.selectedDateSchedules = this.schedules.filter(schedule => {
+      const scheduleDate = new Date(schedule.start_time);
+      return this.isSameDay(scheduleDate, date);
+    });
+    
+    // Auto-fill form with selected date if adding new schedule
+    if (this.showForm && !this.editingScheduleId) {
+      const selectedDateTime = new Date(date);
+      selectedDateTime.setHours(9, 0, 0, 0); // Default to 9:00 AM
+      this.scheduleForm.patchValue({
+        start_time: this.formatDateForInput(selectedDateTime)
+      });
+    }
+  }
+
+  onScheduleClicked(schedule: Schedule): void {
+    this.editSchedule(schedule);
+  }
+
+  private isSameDay(date1: Date, date2: Date): boolean {
+    return date1.getFullYear() === date2.getFullYear() &&
+           date1.getMonth() === date2.getMonth() &&
+           date1.getDate() === date2.getDate();
   }
 
   // Helper to format date for datetime-local input

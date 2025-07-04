@@ -6,29 +6,47 @@
   <button class="btn refresh-btn" (click)="loadDashboardData()">重新整理</button>
   
   <div class="dashboard-grid">
-    <!-- 近期行事曆 -->
-    <div class="card">
-      <h2>近期行程</h2>
+    <!-- 月曆行事曆 -->
+    <div class="card calendar-card">
+      <div class="card-header">
+        <h2>本月行程</h2>
+        <a routerLink="/schedule" class="view-all-link">查看全部</a>
+      </div>
       
       <app-loading-spinner *ngIf="isLoadingSchedules"></app-loading-spinner>
       
-      <div *ngIf="!isLoadingSchedules" class="schedule-list">
-        <div *ngIf="schedules.length === 0" class="empty-state">
-          目前沒有行程
+      <div *ngIf="!isLoadingSchedules" class="calendar-container">
+        <!-- 月曆始終顯示，不管是否有行程資料 -->
+        <app-calendar 
+          [schedules]="schedules" 
+          (dateSelected)="onDateSelected($event)"
+          (scheduleClicked)="onScheduleClicked($event)"
+          class="dashboard-calendar">
+        </app-calendar>
+        
+        <!-- 無行程提示（只在完全沒有行程時顯示） -->
+        <div *ngIf="schedules.length === 0" class="no-schedules-hint">
+          <p>目前沒有行程，點擊 <a routerLink="/schedule">這裡</a> 開始新增行程</p>
         </div>
         
-        <div *ngFor="let schedule of schedules.slice(0, 5)" class="schedule-item">
-          <div class="schedule-title">{{ schedule.title }}</div>
-          <div class="schedule-time">
-            {{ schedule.start_time | date:'yyyy-MM-dd HH:mm' }}
+        <!-- 選中日期的行程詳情（簡化版） -->
+        <div class="selected-date-summary" *ngIf="selectedDate">
+          <h4>{{ selectedDate | date:'MM月dd日' }}</h4>
+          
+          <div class="mini-schedule-list" *ngIf="selectedDateSchedules.length > 0">
+            <div *ngFor="let schedule of selectedDateSchedules.slice(0, 3)" class="mini-schedule-item">
+              <span class="schedule-time">{{ schedule.start_time | date:'HH:mm' }}</span>
+              <span class="schedule-title">{{ schedule.title }}</span>
+            </div>
+            <div *ngIf="selectedDateSchedules.length > 3" class="more-schedules">
+              還有 {{ selectedDateSchedules.length - 3 }} 個行程...
+            </div>
           </div>
-          <p *ngIf="schedule.description" class="schedule-description">
-            {{ schedule.description }}
-          </p>
-        </div>
-        
-        <div *ngIf="schedules.length > 0" class="view-all">
-          <a routerLink="/schedule">查看全部</a>
+          
+          <div class="no-events-today" *ngIf="selectedDateSchedules.length === 0">
+            <p>這天沒有安排行程</p>
+            <a routerLink="/schedule" class="add-event-link">新增行程</a>
+          </div>
         </div>
       </div>
     </div>

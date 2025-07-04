@@ -118,3 +118,213 @@
   background-color: #f8d7da;
   color: #842029;
 }
+
+/* Ensure dashboard content doesn't interfere with header dropdown */
+.container {
+  position: relative;
+  z-index: 1;
+}
+
+/* Calendar card specific styles */
+.calendar-card {
+  grid-column: 1 / -1; /* Take full width */
+  max-width: none;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.card-header h2 {
+  margin: 0;
+  border: none;
+  padding: 0;
+}
+
+.view-all-link {
+  color: #3b82f6;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.view-all-link:hover {
+  text-decoration: underline;
+}
+
+.calendar-container {
+  position: relative;
+}
+
+/* Compact calendar for dashboard */
+.dashboard-calendar {
+  --calendar-height: 350px;
+}
+
+.dashboard-calendar ::ng-deep .calendar-date {
+  min-height: 50px;
+  font-size: 0.875rem;
+}
+
+.dashboard-calendar ::ng-deep .schedule-indicator {
+  font-size: 0.625rem;
+  padding: 1px 3px;
+  margin-bottom: 1px;
+}
+
+.dashboard-calendar ::ng-deep .calendar-header {
+  padding: 0.75rem 1rem;
+}
+
+.dashboard-calendar ::ng-deep .month-year {
+  font-size: 1.125rem;
+}
+
+.dashboard-calendar ::ng-deep .btn-nav,
+.dashboard-calendar ::ng-deep .btn-today {
+  font-size: 0.875rem;
+}
+
+/* Selected date summary */
+.selected-date-summary {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 6px;
+  border-left: 4px solid #3b82f6;
+}
+
+.selected-date-summary h4 {
+  margin: 0 0 0.75rem;
+  color: #1e40af;
+  font-size: 1rem;
+}
+
+.mini-schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mini-schedule-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.schedule-time {
+  color: #6b7280;
+  font-weight: 500;
+  min-width: 50px;
+}
+
+.schedule-title {
+  color: #374151;
+  flex: 1;
+}
+
+.more-schedules {
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-style: italic;
+  text-align: center;
+  margin-top: 0.25rem;
+}
+
+/* No schedules hint */
+.no-schedules-hint {
+  text-align: center;
+  padding: 1rem;
+  margin-top: 1rem;
+  background: #f0f9ff;
+  border-radius: 6px;
+  border: 1px dashed #3b82f6;
+}
+
+.no-schedules-hint p {
+  margin: 0;
+  color: #1e40af;
+  font-size: 0.875rem;
+}
+
+.no-schedules-hint a {
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.no-schedules-hint a:hover {
+  text-decoration: underline;
+}
+
+/* No events for selected date */
+.no-events-today {
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.no-events-today p {
+  margin: 0 0 0.5rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.add-event-link {
+  display: inline-block;
+  color: #3b82f6;
+  text-decoration: none;
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #3b82f6;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.add-event-link:hover {
+  background: #3b82f6;
+  color: white;
+  text-decoration: none;
+}
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .card h2 {
+    font-size: 1.1rem;
+  }
+  
+  .refresh-btn {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+  
+  .calendar-card {
+    grid-column: 1;
+  }
+  
+  .dashboard-calendar ::ng-deep .calendar-date {
+    min-height: 40px;
+    padding: 0.25rem;
+  }
+  
+  .dashboard-calendar ::ng-deep .schedule-indicator {
+    font-size: 0.5rem;
+    padding: 1px 2px;
+  }
+  
+  .dashboard-calendar ::ng-deep .calendar-header {
+    padding: 0.5rem;
+  }
+  
+  .selected-date-summary {
+    padding: 0.75rem;
+  }
+}

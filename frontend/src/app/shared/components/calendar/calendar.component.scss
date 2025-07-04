@@ -1,0 +1,44 @@
+/* 簡化的月曆組件樣式 - 核心樣式已移至全域 */
+
+.month-year {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin: 0;
+  flex: 1;
+  text-align: center;
+}
+
+.btn-nav {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.btn-nav:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-today {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.btn-today:hover {
+  background: rgba(255, 255, 255, 0.3);
+}

@@ -7,6 +7,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { HeaderComponent } from './shared/components/header/header.component';
 import { SidebarComponent } from './shared/components/sidebar/sidebar.component';
+import { CalendarComponent } from './shared/components/calendar/calendar.component';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { ScheduleComponent } from './pages/schedule/schedule.component';
 import { ConsumableComponent } from './pages/consumable/consumable.component';
@@ -17,6 +18,7 @@ import { LoadingSpinnerComponent } from './shared/components/loading-spinner/loa
     AppComponent,
     HeaderComponent,
     SidebarComponent,
+    CalendarComponent,
     DashboardComponent,
     ScheduleComponent,
     ConsumableComponent,

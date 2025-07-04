@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of, catchError, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Schedule, ScheduleCreateDto, ScheduleUpdateDto } from '../models/schedule.model';
 
@@ -13,7 +13,13 @@ export class ScheduleService {
   constructor(private http: HttpClient) {}
 
   getSchedules(): Observable<Schedule[]> {
-    return this.http.get<Schedule[]>(this.apiUrl);
+    return this.http.get<Schedule[]>(this.apiUrl).pipe(
+      map(data => Array.isArray(data) ? data : []),
+      catchError(error => {
+        console.error('Error fetching schedules:', error);
+        return of([]); // Return empty array on error
+      })
+    );
   }
 
   getSchedule(id: number): Observable<Schedule> {

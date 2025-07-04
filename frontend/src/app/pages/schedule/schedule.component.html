@@ -1,9 +1,14 @@
 <div class="container">
   <div class="page-header">
     <h1 class="page-title">行事曆</h1>
-    <button class="btn" (click)="toggleForm()">
-      {{ showForm ? '取消' : '新增行程' }}
-    </button>
+    <div class="header-actions">
+      <button class="btn btn-secondary" (click)="toggleView()">
+        {{ isCalendarView ? '列表檢視' : '月曆檢視' }}
+      </button>
+      <button class="btn" (click)="toggleForm()">
+        {{ showForm ? '取消' : '新增行程' }}
+      </button>
+    </div>
   </div>
 
   <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
@@ -48,33 +53,65 @@
     </form>
   </div>
 
-  <!-- 行程列表 -->
-  <div class="card">
-    <div class="card-header">
-      <h2>所有行程</h2>
-      <button class="btn btn-secondary" (click)="loadSchedules()">重新載入</button>
-    </div>
+  <!-- 月曆檢視 -->
+  <div class="calendar-section" *ngIf="isCalendarView">
+    <app-calendar 
+      [schedules]="schedules" 
+      (dateSelected)="onDateSelected($event)"
+      (scheduleClicked)="onScheduleClicked($event)">
+    </app-calendar>
     
-    <app-loading-spinner *ngIf="isLoading"></app-loading-spinner>
-    
-    <div *ngIf="!isLoading">
-      <div *ngIf="schedules.length === 0" class="empty-state">
-        目前沒有行程，請點擊"新增行程"按鈕來新增。
-      </div>
-      
-      <div class="schedule-list">
-        <div *ngFor="let schedule of schedules" class="schedule-item">
-          <div class="schedule-content">
-            <h3>{{ schedule.title }}</h3>
+    <!-- 選中日期的行程詳情 -->
+    <div class="selected-date-events" *ngIf="selectedDate && selectedDateSchedules.length > 0">
+      <h3>{{ selectedDate | date:'yyyy年MM月dd日' }} 的行程</h3>
+      <div class="event-list">
+        <div *ngFor="let schedule of selectedDateSchedules" class="event-item">
+          <div class="event-content">
+            <h4>{{ schedule.title }}</h4>
             <p *ngIf="schedule.description">{{ schedule.description }}</p>
-            <div class="schedule-time">
-              <span>開始: {{ schedule.start_time | date:'yyyy-MM-dd HH:mm' }}</span>
-              <span *ngIf="schedule.end_time">結束: {{ schedule.end_time | date:'yyyy-MM-dd HH:mm' }}</span>
+            <div class="event-time">
+              <span>{{ schedule.start_time | date:'HH:mm' }}</span>
+              <span *ngIf="schedule.end_time"> - {{ schedule.end_time | date:'HH:mm' }}</span>
             </div>
           </div>
-          <div class="schedule-actions">
+          <div class="event-actions">
             <button class="btn-icon edit" (click)="editSchedule(schedule)" title="編輯">✏️</button>
             <button class="btn-icon delete" (click)="deleteSchedule(schedule.id!)" title="刪除">🗑️</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 列表檢視 -->
+  <div class="list-section" *ngIf="!isCalendarView">
+    <div class="card">
+      <div class="card-header">
+        <h2>所有行程</h2>
+        <button class="btn btn-secondary" (click)="loadSchedules()">重新載入</button>
+      </div>
+      
+      <app-loading-spinner *ngIf="isLoading"></app-loading-spinner>
+      
+      <div *ngIf="!isLoading">
+        <div *ngIf="schedules.length === 0" class="empty-state">
+          目前沒有行程，請點擊"新增行程"按鈕來新增。
+        </div>
+        
+        <div class="schedule-list">
+          <div *ngFor="let schedule of schedules" class="schedule-item">
+            <div class="schedule-content">
+              <h3>{{ schedule.title }}</h3>
+              <p *ngIf="schedule.description">{{ schedule.description }}</p>
+              <div class="schedule-time">
+                <span>開始: {{ schedule.start_time | date:'yyyy-MM-dd HH:mm' }}</span>
+                <span *ngIf="schedule.end_time">結束: {{ schedule.end_time | date:'yyyy-MM-dd HH:mm' }}</span>
+              </div>
+            </div>
+            <div class="schedule-actions">
+              <button class="btn-icon edit" (click)="editSchedule(schedule)" title="編輯">✏️</button>
+              <button class="btn-icon delete" (click)="deleteSchedule(schedule.id!)" title="刪除">🗑️</button>
+            </div>
           </div>
         </div>
       </div>
