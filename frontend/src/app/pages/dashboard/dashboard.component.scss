@@ -118,3 +118,26 @@
   background-color: #f8d7da;
   color: #842029;
 }
+
+/* Ensure dashboard content doesn't interfere with header dropdown */
+.container {
+  position: relative;
+  z-index: 1;
+}
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .card h2 {
+    font-size: 1.1rem;
+  }
+  
+  .refresh-btn {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+}

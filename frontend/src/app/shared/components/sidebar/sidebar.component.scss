@@ -46,3 +46,10 @@
   width: 1.5rem;
   text-align: center;
 }
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+}

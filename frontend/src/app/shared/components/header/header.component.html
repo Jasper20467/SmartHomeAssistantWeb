@@ -2,11 +2,14 @@
   <div class="logo">
     <h1>{{ appName }}</h1>
   </div>
-  <nav class="nav-links">
+  <button class="mobile-menu-toggle" (click)="toggleMobileMenu()" [class.active]="mobileMenuOpen">
+    {{ mobileMenuOpen ? '✕' : '☰' }}
+  </button>
+  <nav class="nav-links" [class.mobile-open]="mobileMenuOpen">
     <ul>
-      <li><a routerLink="/dashboard" routerLinkActive="active">儀表板</a></li>
-      <li><a routerLink="/schedule" routerLinkActive="active">行事曆</a></li>
-      <li><a routerLink="/consumable" routerLinkActive="active">耗材管理</a></li>
+      <li><a routerLink="/dashboard" routerLinkActive="active" (click)="closeMobileMenu()">儀表板</a></li>
+      <li><a routerLink="/schedule" routerLinkActive="active" (click)="closeMobileMenu()">行事曆</a></li>
+      <li><a routerLink="/consumable" routerLinkActive="active" (click)="closeMobileMenu()">耗材管理</a></li>
     </ul>
   </nav>
 </header>
