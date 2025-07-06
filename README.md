@@ -153,6 +153,26 @@ SmartHomeAssistantWeb/
 
 ## 部署指南
 
+### 重要：時區設定
+
+在部署到 AWS EC2 或其他雲端環境時，**時區設定**非常重要，特別是對於行程管理功能。
+
+#### 時區設定的重要性
+- 確保資料庫時間戳記正確
+- 保證行程排程功能正常運作
+- 統一前端、後端和資料庫的時間顯示
+
+#### 快速設定
+```bash
+# 設定系統時區（Ubuntu/Debian）
+sudo timedatectl set-timezone Asia/Taipei
+
+# 檢查時區設定
+timedatectl status
+```
+
+**詳細的時區設定指南請參考：[docs/timezone-setup-guide.md](docs/timezone-setup-guide.md)**
+
 ### 使用 Docker 部署
 
 本專案支持兩種 Docker 部署環境：本地 Docker Compose 和 Azure Container Apps。
@@ -164,6 +184,26 @@ docker-compose -f docker-compose.yml up --build
 ```
 
 注意：在本地環境中，前端容器使用 Nginx 的本地配置，會自動通過 Docker 網絡解析 `backend` 服務名稱。
+
+#### AWS EC2 部署
+
+對於 AWS EC2 部署，請使用專門的部署腳本：
+
+```bash
+# 克隆專案到 EC2 實例
+git clone https://github.com/yourusername/SmartHomeAssistantWeb.git
+cd SmartHomeAssistantWeb/scripts/DeployOn_AWS_Ec2
+
+# 使用包含時區設定的部署腳本
+chmod +x deploy_with_timezone.sh
+./deploy_with_timezone.sh
+```
+
+此腳本會：
+- 檢查並設定系統時區
+- 確認 Docker 容器的時區設定
+- 部署所有服務
+- 驗證時區設定是否正確
 
 #### Azure Container Apps 部署
 

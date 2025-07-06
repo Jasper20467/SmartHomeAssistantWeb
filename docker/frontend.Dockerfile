@@ -20,6 +20,13 @@ RUN ng build --configuration production
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
 
+# Install timezone data
+RUN apk add --no-cache tzdata
+
+# Set timezone to Asia/Taipei
+ENV TZ=Asia/Taipei
+RUN cp /usr/share/zoneinfo/Asia/Taipei /etc/localtime && echo "Asia/Taipei" > /etc/timezone
+
 # Copy built app from previous stage
 COPY --from=build /app/dist/smart-home-assistant-web /usr/share/nginx/html
 

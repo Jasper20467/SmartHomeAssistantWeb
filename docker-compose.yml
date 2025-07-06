@@ -11,6 +11,11 @@ services:
       - backend
     environment:
       - NODE_ENV=production
+      - TZ=Asia/Taipei
+    # 移除 volumes 掛載，改用 Dockerfile 內建時區設定
+    # volumes:
+    #   - /etc/timezone:/etc/timezone:ro
+    #   - /etc/localtime:/etc/localtime:ro
       # No BACKEND_URL needed for local Docker Compose - will use default config
 
   backend:
@@ -21,11 +26,13 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
+      # 移除時區檔案掛載，改用 Dockerfile 內建時區設定
     depends_on:
       - db
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/smarthome
       - ENVIRONMENT=development
+      - TZ=Asia/Taipei
 
   linebot:
     build:
@@ -35,6 +42,7 @@ services:
       - "5000:5000"
     volumes:
       - ./LineBotAI:/app
+      # 移除時區檔案掛載，改用 Dockerfile 內建時區設定
     depends_on:
       - backend
     environment:
@@ -42,6 +50,7 @@ services:
       - CHATGPT_API_KEY=${CHATGPT_API_KEY}
       - BACKEND_API_URL=http://backend:8000
       - DEBUG_MODE=true
+      - TZ=Asia/Taipei
 
   db:
     image: postgres:14
@@ -50,10 +59,13 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+      # 移除時區檔案掛載，PostgreSQL 官方映像檔支援 TZ 環境變數
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=smarthome
+      - TZ=Asia/Taipei
+      - PGTZ=Asia/Taipei
     restart: always
 
 volumes:

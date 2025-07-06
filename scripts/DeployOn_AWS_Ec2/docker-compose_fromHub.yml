@@ -1,25 +1,53 @@
 version: '3'
 
 services:
-  frontend:
-    image: popo510691/homeassistant.frontend:1.0
+  caddy:
+    image: caddy:2-alpine
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      - TZ=Asia/Taipei
+    depends_on:
+      - frontend
+      - backend
+    restart: always
+    networks:
+      - app-network
+
+  frontend:
+    image: popo510691/homeassistant.frontend:1.0
+    # 移除直接對外的端口映射，改由 Caddy 代理
+    # ports:
+    #   - "80:80"
+    expose:
+      - "80"
     depends_on:
       - backend
     environment:
       - NODE_ENV=production
+      - TZ=Asia/Taipei
+    # 移除 volumes 掛載，改用映像檔內建時區設定
     restart: always
     networks:
       - app-network
       
   backend:
     image: popo510691/homeassistant.backend:1.0
-    ports:
-      - "8000:8000"
+    # 移除直接對外的端口映射，改由 Caddy 代理
+    # ports:
+    #   - "8000:8000"
+    expose:
+      - "8000"
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/smarthome
       - ENVIRONMENT=development
+      - TZ=Asia/Taipei
+    # 移除 volumes 掛載，改用映像檔內建時區設定
     depends_on:
       - db
     restart: always
@@ -35,6 +63,8 @@ services:
       - CHATGPT_API_KEY=${CHATGPT_API_KEY}
       - BACKEND_API_URL=http://backend:8000
       - DEBUG_MODE=true
+      - TZ=Asia/Taipei
+    # 移除 volumes 掛載，改用映像檔內建時區設定
     depends_on:
       - backend
     restart: always
@@ -48,10 +78,13 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+      # 移除時區檔案掛載，PostgreSQL 官方映像檔支援 TZ 環境變數
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=smarthome
+      - TZ=Asia/Taipei
+      - PGTZ=Asia/Taipei
     restart: always
     networks:
       - app-network
@@ -62,3 +95,5 @@ networks:
 
 volumes:
   postgres_data:
+  caddy_data:
+  caddy_config:

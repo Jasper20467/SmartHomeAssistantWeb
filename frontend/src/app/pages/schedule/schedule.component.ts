@@ -247,7 +247,13 @@ export class ScheduleComponent implements OnInit {
 
   // Helper to format date for datetime-local input
   private formatDateForInput(date: Date): string {
-    return date.toISOString().slice(0, 16);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   }
 
   // Custom validator to ensure time intervals are 30 minutes (00 or 30 only)
@@ -472,8 +478,20 @@ export class ScheduleComponent implements OnInit {
     const startTime = this.scheduleForm.get('start_time')?.value;
     if (!startTime) return '';
     
-    const date = new Date(startTime);
-    return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+    try {
+      const date = new Date(startTime);
+      if (isNaN(date.getTime())) return '';
+      
+      // 使用本地時區格式化，避免時區轉換問題
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      
+      return `${year}-${month}-${day}`;
+    } catch (error) {
+      console.error('Error parsing start date:', error);
+      return '';
+    }
   }
   
   // Get start hour value for hour select
@@ -481,8 +499,15 @@ export class ScheduleComponent implements OnInit {
     const startTime = this.scheduleForm.get('start_time')?.value;
     if (!startTime) return '';
     
-    const date = new Date(startTime);
-    return date.getHours().toString();
+    try {
+      const date = new Date(startTime);
+      if (isNaN(date.getTime())) return '';
+      
+      return date.getHours().toString();
+    } catch (error) {
+      console.error('Error parsing start hour:', error);
+      return '';
+    }
   }
   
   // Get start minute value for minute select
@@ -490,8 +515,15 @@ export class ScheduleComponent implements OnInit {
     const startTime = this.scheduleForm.get('start_time')?.value;
     if (!startTime) return '';
     
-    const date = new Date(startTime);
-    return date.getMinutes().toString();
+    try {
+      const date = new Date(startTime);
+      if (isNaN(date.getTime())) return '';
+      
+      return date.getMinutes().toString();
+    } catch (error) {
+      console.error('Error parsing start minute:', error);
+      return '';
+    }
   }
   
   // Get end date value for date input
@@ -499,8 +531,20 @@ export class ScheduleComponent implements OnInit {
     const endTime = this.scheduleForm.get('end_time')?.value;
     if (!endTime) return '';
     
-    const date = new Date(endTime);
-    return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+    try {
+      const date = new Date(endTime);
+      if (isNaN(date.getTime())) return '';
+      
+      // 使用本地時區格式化，避免時區轉換問題
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      
+      return `${year}-${month}-${day}`;
+    } catch (error) {
+      console.error('Error parsing end date:', error);
+      return '';
+    }
   }
   
   // Get end hour value for hour select
@@ -508,8 +552,15 @@ export class ScheduleComponent implements OnInit {
     const endTime = this.scheduleForm.get('end_time')?.value;
     if (!endTime) return '';
     
-    const date = new Date(endTime);
-    return date.getHours().toString();
+    try {
+      const date = new Date(endTime);
+      if (isNaN(date.getTime())) return '';
+      
+      return date.getHours().toString();
+    } catch (error) {
+      console.error('Error parsing end hour:', error);
+      return '';
+    }
   }
   
   // Get end minute value for minute select
@@ -517,8 +568,15 @@ export class ScheduleComponent implements OnInit {
     const endTime = this.scheduleForm.get('end_time')?.value;
     if (!endTime) return '';
     
-    const date = new Date(endTime);
-    return date.getMinutes().toString();
+    try {
+      const date = new Date(endTime);
+      if (isNaN(date.getTime())) return '';
+      
+      return date.getMinutes().toString();
+    } catch (error) {
+      console.error('Error parsing end minute:', error);
+      return '';
+    }
   }
   
   // Handle start date change
@@ -531,15 +589,24 @@ export class ScheduleComponent implements OnInit {
     let minute = 0; // Default to 00
     
     if (currentStartTime) {
-      const currentDate = new Date(currentStartTime);
-      hour = currentDate.getHours();
-      minute = currentDate.getMinutes();
+      try {
+        const currentDate = new Date(currentStartTime);
+        if (!isNaN(currentDate.getTime())) {
+          hour = currentDate.getHours();
+          minute = currentDate.getMinutes();
+        }
+      } catch (error) {
+        console.error('Error parsing current start time:', error);
+      }
     }
     
-    const newDateTime = new Date(dateValue);
-    newDateTime.setHours(hour, minute, 0, 0);
+    // 直接使用 Date 構造函數創建日期，避免時區問題
+    const [year, month, day] = dateValue.split('-');
+    const newDateTime = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), hour, minute, 0, 0);
     
-    this.scheduleForm.get('start_time')?.setValue(newDateTime.toISOString().slice(0, 16));
+    // 使用本地時間格式設置表單值
+    const formattedDateTime = this.formatDateForInput(newDateTime);
+    this.scheduleForm.get('start_time')?.setValue(formattedDateTime);
     this.validateAndUpdateEndTime();
   }
   
@@ -553,13 +620,23 @@ export class ScheduleComponent implements OnInit {
     let minute = 0;
     
     if (currentStartTime) {
-      date = new Date(currentStartTime);
-      minute = date.getMinutes();
+      try {
+        date = new Date(currentStartTime);
+        if (!isNaN(date.getTime())) {
+          minute = date.getMinutes();
+        } else {
+          date = new Date();
+        }
+      } catch (error) {
+        console.error('Error parsing current start time:', error);
+        date = new Date();
+      }
     }
     
     date.setHours(hourValue, minute, 0, 0);
     
-    this.scheduleForm.get('start_time')?.setValue(date.toISOString().slice(0, 16));
+    const formattedDateTime = this.formatDateForInput(date);
+    this.scheduleForm.get('start_time')?.setValue(formattedDateTime);
     this.validateAndUpdateEndTime();
   }
   
@@ -572,12 +649,21 @@ export class ScheduleComponent implements OnInit {
     let date = new Date();
     
     if (currentStartTime) {
-      date = new Date(currentStartTime);
+      try {
+        date = new Date(currentStartTime);
+        if (isNaN(date.getTime())) {
+          date = new Date();
+        }
+      } catch (error) {
+        console.error('Error parsing current start time:', error);
+        date = new Date();
+      }
     }
     
     date.setMinutes(minuteValue, 0, 0);
     
-    this.scheduleForm.get('start_time')?.setValue(date.toISOString().slice(0, 16));
+    const formattedDateTime = this.formatDateForInput(date);
+    this.scheduleForm.get('start_time')?.setValue(formattedDateTime);
     this.validateAndUpdateEndTime();
   }
   
@@ -591,15 +677,24 @@ export class ScheduleComponent implements OnInit {
     let minute = 0; // Default to 00
     
     if (currentEndTime) {
-      const currentDate = new Date(currentEndTime);
-      hour = currentDate.getHours();
-      minute = currentDate.getMinutes();
+      try {
+        const currentDate = new Date(currentEndTime);
+        if (!isNaN(currentDate.getTime())) {
+          hour = currentDate.getHours();
+          minute = currentDate.getMinutes();
+        }
+      } catch (error) {
+        console.error('Error parsing current end time:', error);
+      }
     }
     
-    const newDateTime = new Date(dateValue);
-    newDateTime.setHours(hour, minute, 0, 0);
+    // 直接使用 Date 構造函數創建日期，避免時區問題
+    const [year, month, day] = dateValue.split('-');
+    const newDateTime = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), hour, minute, 0, 0);
     
-    this.scheduleForm.get('end_time')?.setValue(newDateTime.toISOString().slice(0, 16));
+    // 使用本地時間格式設置表單值
+    const formattedDateTime = this.formatDateForInput(newDateTime);
+    this.scheduleForm.get('end_time')?.setValue(formattedDateTime);
     this.validateEndTimeAfterStart();
   }
   
@@ -613,13 +708,23 @@ export class ScheduleComponent implements OnInit {
     let minute = 0;
     
     if (currentEndTime) {
-      date = new Date(currentEndTime);
-      minute = date.getMinutes();
+      try {
+        date = new Date(currentEndTime);
+        if (!isNaN(date.getTime())) {
+          minute = date.getMinutes();
+        } else {
+          date = new Date();
+        }
+      } catch (error) {
+        console.error('Error parsing current end time:', error);
+        date = new Date();
+      }
     }
     
     date.setHours(hourValue, minute, 0, 0);
     
-    this.scheduleForm.get('end_time')?.setValue(date.toISOString().slice(0, 16));
+    const formattedDateTime = this.formatDateForInput(date);
+    this.scheduleForm.get('end_time')?.setValue(formattedDateTime);
     this.validateEndTimeAfterStart();
   }
   
@@ -632,12 +737,21 @@ export class ScheduleComponent implements OnInit {
     let date = new Date();
     
     if (currentEndTime) {
-      date = new Date(currentEndTime);
+      try {
+        date = new Date(currentEndTime);
+        if (isNaN(date.getTime())) {
+          date = new Date();
+        }
+      } catch (error) {
+        console.error('Error parsing current end time:', error);
+        date = new Date();
+      }
     }
     
     date.setMinutes(minuteValue, 0, 0);
     
-    this.scheduleForm.get('end_time')?.setValue(date.toISOString().slice(0, 16));
+    const formattedDateTime = this.formatDateForInput(date);
+    this.scheduleForm.get('end_time')?.setValue(formattedDateTime);
     this.validateEndTimeAfterStart();
   }
   
@@ -654,14 +768,14 @@ export class ScheduleComponent implements OnInit {
       if (endDate <= startDate) {
         const newEndTime = new Date(startDate);
         newEndTime.setMinutes(newEndTime.getMinutes() + 30);
-        this.scheduleForm.get('end_time')?.setValue(newEndTime.toISOString().slice(0, 16));
+        this.scheduleForm.get('end_time')?.setValue(this.formatDateForInput(newEndTime));
       }
     } else if (startTime && !endTime) {
       // If no end time set, default to 1 hour after start
       const startDate = new Date(startTime);
       const defaultEndTime = new Date(startDate);
       defaultEndTime.setHours(defaultEndTime.getHours() + 1);
-      this.scheduleForm.get('end_time')?.setValue(defaultEndTime.toISOString().slice(0, 16));
+      this.scheduleForm.get('end_time')?.setValue(this.formatDateForInput(defaultEndTime));
     }
   }
   
@@ -678,7 +792,7 @@ export class ScheduleComponent implements OnInit {
       if (endDate <= startDate) {
         const newEndTime = new Date(startDate);
         newEndTime.setMinutes(newEndTime.getMinutes() + 30);
-        this.scheduleForm.get('end_time')?.setValue(newEndTime.toISOString().slice(0, 16));
+        this.scheduleForm.get('end_time')?.setValue(this.formatDateForInput(newEndTime));
       }
     }
   }
