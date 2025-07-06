@@ -1,6 +1,0 @@
-variables:
-  environmentName: 'Production'
-  azureServiceConnection: 'SmartHome-Prod'
-  appServiceName: 'smarthome-assistant'
-  resourceGroupName: 'rg-smarthome-prod'
-  slotName: 'production'

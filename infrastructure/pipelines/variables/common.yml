@@ -1,6 +1,0 @@
-variables:
-  solution: '**/*.sln'
-  buildPlatform: 'Any CPU'
-  buildConfiguration: 'Release'
-  dotNetVersion: '6.0.x'
-  projectName: 'SmartHomeAssistantWeb'
