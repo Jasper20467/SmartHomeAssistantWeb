@@ -137,15 +137,16 @@ class ProductionEnvironmentTester:
             print("   ✅ LineBot 健康檢查通過")
             
             # 檢查 webhook 端點（不實際觸發）
-            webhook_url = f"{self.linebot_base}/webhook"
+            # webhook 端點直接在根路徑 /webhook，不在 /linebot/webhook
+            webhook_url = f"{self.domain}/webhook"
             try:
                 response = requests.options(webhook_url, timeout=5)
                 if response.status_code in [200, 405]:  # 405 是預期的，因為我們用 OPTIONS
                     print("   ✅ LineBot Webhook 端點可達")
                 else:
                     print(f"   ⚠️  LineBot Webhook 響應異常: HTTP {response.status_code}")
-            except:
-                print("   ⚠️  LineBot Webhook 端點測試跳過")
+            except Exception as e:
+                print(f"   ⚠️  LineBot Webhook 端點測試失敗: {e}")
             
             return True
             
