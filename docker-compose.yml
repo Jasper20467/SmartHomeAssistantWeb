@@ -17,6 +17,8 @@ services:
     #   - /etc/timezone:/etc/timezone:ro
     #   - /etc/localtime:/etc/localtime:ro
       # No BACKEND_URL needed for local Docker Compose - will use default config
+    networks:
+      - app-network
 
   backend:
     build:
@@ -30,9 +32,11 @@ services:
     depends_on:
       - db
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/smarthome
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/smarthome
       - ENVIRONMENT=development
       - TZ=Asia/Taipei
+    networks:
+      - app-network
 
   linebot:
     build:
@@ -49,8 +53,12 @@ services:
       - LINE_CHANNEL_ACCESS_TOKEN=${LINE_CHANNEL_ACCESS_TOKEN}
       - CHATGPT_API_KEY=${CHATGPT_API_KEY}
       - BACKEND_API_URL=http://backend:8000
+      - DOMAIN_NAME=localhost
       - DEBUG_MODE=true
+      - DEBUG_STAGE=true
       - TZ=Asia/Taipei
+    networks:
+      - app-network
 
   db:
     image: postgres:14
@@ -67,6 +75,12 @@ services:
       - TZ=Asia/Taipei
       - PGTZ=Asia/Taipei
     restart: always
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   postgres_data:

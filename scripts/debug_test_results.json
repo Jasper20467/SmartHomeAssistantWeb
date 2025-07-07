@@ -1,0 +1,101 @@
+{
+  "mode": "debug",
+  "timestamp": "2025-07-07 13:54:12",
+  "base_urls": {
+    "frontend": "http://localhost:80",
+    "backend": "http://localhost:8000",
+    "linebot": "http://localhost:5000",
+    "db": "postgresql://postgres:postgres@localhost:5432/smarthome"
+  },
+  "tests": {
+    "health": {
+      "backend": {
+        "status": "healthy",
+        "response": {
+          "status": "ok"
+        }
+      },
+      "linebot": {
+        "status": "healthy",
+        "response": {
+          "backend_url": "http://backend:8000",
+          "debug_mode": true,
+          "debug_stage": true,
+          "service": "linebot",
+          "status": "ok"
+        }
+      },
+      "frontend": {
+        "status": "healthy",
+        "response": "HTML content received"
+      }
+    },
+    "api": {
+      "backend/": {
+        "status": "success",
+        "code": 200
+      },
+      "backend/health": {
+        "status": "success",
+        "code": 200
+      },
+      "backend/api/schedules": {
+        "status": "success",
+        "code": 200
+      },
+      "backend/api/consumables": {
+        "status": "success",
+        "code": 200
+      }
+    },
+    "frontend_backend": {
+      "frontend_proxy/schedules": {
+        "status": "success",
+        "code": 200
+      },
+      "frontend_proxy/consumables": {
+        "status": "success",
+        "code": 200
+      }
+    },
+    "linebot_backend": {
+      "config": {
+        "status": "success",
+        "data": {
+          "backend_url": "http://backend:8000",
+          "chatgpt_key_set": true,
+          "debug_mode": "true",
+          "debug_stage": "true",
+          "domain_name": "localhost",
+          "line_token_set": true,
+          "timezone": "Asia/Taipei"
+        }
+      },
+      "backend_connectivity": {
+        "status": "success",
+        "data": {
+          "backend_url": "http://backend:8000",
+          "debug_mode": "true",
+          "debug_stage": "true",
+          "domain_name": "localhost",
+          "tests": {
+            "consumables": {
+              "error": "'list' object has no attribute 'get'",
+              "status": "error"
+            },
+            "schedules": {
+              "error": "'list' object has no attribute 'get'",
+              "status": "error"
+            }
+          }
+        }
+      }
+    },
+    "database": {
+      "backend_db": {
+        "status": "success",
+        "code": 200
+      }
+    }
+  }
+}

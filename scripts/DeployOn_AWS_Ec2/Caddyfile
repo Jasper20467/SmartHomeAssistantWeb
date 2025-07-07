@@ -1,10 +1,19 @@
 {
-  acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+  # 生產環境使用正式 Let's Encrypt CA
+  # 如需測試請取消註解下一行
+  # acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
 }
 
 smarthome.the-jasperezlife.com {
 
   encode zstd gzip
+
+  @linebot {
+    path /webhook
+    path /linebot/*
+    path /api/debug/*
+  }
+  reverse_proxy @linebot linebot:5000
 
   @api {
     path /api/*

@@ -22,9 +22,34 @@ logger = logging.getLogger(__name__)
 # Configuration variables
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv('LINE_CHANNEL_ACCESS_TOKEN', '')
 CHATGPT_API_KEY = os.getenv('CHATGPT_API_KEY', '')
-BACKEND_API_URL = os.getenv('BACKEND_API_URL', 'http://localhost:8000')
 DEBUG_MODE = os.getenv('DEBUG_MODE', 'false').lower() == 'true'
 DEBUG_STAGE = os.getenv('DEBUG_STAGE', 'false').lower() == 'true'
+
+# Dynamic backend URL configuration based on environment
+def get_backend_url():
+    """Get backend URL based on environment configuration"""
+    # Check if custom backend URL is provided
+    custom_url = os.getenv('BACKEND_API_URL')
+    if custom_url and custom_url.strip():
+        return custom_url
+    
+    # Determine URL based on environment
+    debug_mode = os.getenv('DEBUG_MODE', 'false').lower() == 'true'
+    debug_stage = os.getenv('DEBUG_STAGE', 'false').lower() == 'true'
+    
+    if debug_mode or debug_stage:
+        # Debug mode: use direct container communication
+        return 'http://backend:8000'
+    else:
+        # Production mode: use domain URL through Caddy proxy
+        domain = os.getenv('DOMAIN_NAME', 'smarthome.the-jasperezlife.com')
+        if not domain or domain.strip() == '':
+            domain = 'smarthome.the-jasperezlife.com'
+        return f'https://{domain}/api'
+
+BACKEND_API_URL = get_backend_url()
+logger.info(f"Using backend URL: {BACKEND_API_URL}")
+logger.info(f"Debug mode: {DEBUG_MODE}, Debug stage: {DEBUG_STAGE}")
 
 def create_app():
     from routes.debug_routes import debug_blueprint  # 延遲匯入
@@ -32,7 +57,7 @@ def create_app():
     
     # Initialize services
     line_service = LineService(LINE_CHANNEL_ACCESS_TOKEN)
-    chatgpt_service = ChatGPTService(CHATGPT_API_KEY)
+    chatgpt_service = ChatGPTService(CHATGPT_API_KEY, BACKEND_API_URL)
     
     @app.route('/webhook', methods=['POST'])
     def webhook():
@@ -54,6 +79,17 @@ def create_app():
     def health_check():
         """Health check endpoint"""
         return jsonify({"status": "ok"})
+    
+    @app.route('/linebot/health')
+    def linebot_health():
+        """LineBot specific health check endpoint"""
+        return jsonify({
+            "status": "ok",
+            "service": "linebot",
+            "backend_url": BACKEND_API_URL,
+            "debug_mode": DEBUG_MODE,
+            "debug_stage": DEBUG_STAGE
+        })
     
     return app
 

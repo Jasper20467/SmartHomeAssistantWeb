@@ -20,7 +20,7 @@ services:
       - app-network
 
   frontend:
-    image: popo510691/homeassistant.frontend:1.0
+    image: popo510691/homeassistant.frontend:3.0
     # 移除直接對外的端口映射，改由 Caddy 代理
     # ports:
     #   - "80:80"
@@ -37,15 +37,15 @@ services:
       - app-network
       
   backend:
-    image: popo510691/homeassistant.backend:1.0
+    image: popo510691/homeassistant.backend:3.0
     # 移除直接對外的端口映射，改由 Caddy 代理
     # ports:
     #   - "8000:8000"
     expose:
       - "8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/smarthome
-      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/smarthome
+      - ENVIRONMENT=production
       - TZ=Asia/Taipei
     # 移除 volumes 掛載，改用映像檔內建時區設定
     depends_on:
@@ -55,14 +55,19 @@ services:
       - app-network
       
   linebot:
-    image: popo510691/homeassistant.linebot:1.0
-    ports:
-      - "5000:5000"
+    image: popo510691/homeassistant.linebot:3.0
+    # 移除直接對外的端口映射，改由 Caddy 代理
+    # ports:
+    #   - "5000:5000"
+    expose:
+      - "5000"
     environment:
       - LINE_CHANNEL_ACCESS_TOKEN=${LINE_CHANNEL_ACCESS_TOKEN}
       - CHATGPT_API_KEY=${CHATGPT_API_KEY}
       - BACKEND_API_URL=http://backend:8000
-      - DEBUG_MODE=true
+      - DOMAIN_NAME=smarthome.the-jasperezlife.com
+      - DEBUG_MODE=false
+      - DEBUG_STAGE=false
       - TZ=Asia/Taipei
     # 移除 volumes 掛載，改用映像檔內建時區設定
     depends_on:

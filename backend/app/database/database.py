@@ -3,14 +3,15 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-# DATABASE_URL = os.getenv(
-#     "DATABASE_URL",
-#     "postgresql+asyncpg://postgres:postgres@db:5432/smarthome"
-# )
+# Get database URL from environment variable
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql+asyncpg://postgres:postgres@db:5432/smarthome"
+)
 
 # Configure async engine with correct asyncpg settings
 async_engine = create_async_engine(
-    "postgresql+asyncpg://postgres:postgres@db:5432/smarthome",
+    DATABASE_URL,
     echo=True,
     future=True,
     isolation_level="AUTOCOMMIT",  # Add this for asyncpg
