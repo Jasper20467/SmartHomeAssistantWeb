@@ -156,3 +156,7 @@ docs/_build/
 
 # db
 docker-entrypoint-initdb.d/
+
+# Validation service result
+
+debug_test_results.json
