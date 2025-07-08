@@ -9,6 +9,68 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${file}"
+        },
+        {
+            "name": "Backend API Debug (Docker)",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/backend",
+                    "remoteRoot": "/app"
+                }
+            ],
+            "justMyCode": false,
+            "preLaunchTask": "Start Backend Debug Container"
+        },
+        {
+            "name": "LineBot API Debug (Docker)",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5679
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/LineBotAI",
+                    "remoteRoot": "/app"
+                }
+            ],
+            "justMyCode": false,
+            "preLaunchTask": "Start LineBot Debug Container"
+        },
+        {
+            "name": "Debug Both Services (Docker)",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/backend",
+                    "remoteRoot": "/app"
+                }
+            ],
+            "justMyCode": false,
+            "preLaunchTask": "Start All Debug Containers",
+            "postDebugTask": "Show Debug URLs"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Debug Backend + LineBot",
+            "configurations": [
+                "Backend API Debug (Docker)",
+                "LineBot API Debug (Docker)"
+            ],
+            "stopAll": true
         }
     ]
 }

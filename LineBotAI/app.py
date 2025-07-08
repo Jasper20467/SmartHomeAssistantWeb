@@ -11,6 +11,7 @@ import logging
 from dotenv import load_dotenv
 from services.line_service import LineService
 from services.chatgpt_service import ChatGPTService
+from config.url_config import get_backend_url
 
 # Load environment variables
 load_dotenv()
@@ -25,28 +26,7 @@ CHATGPT_API_KEY = os.getenv('CHATGPT_API_KEY', '')
 DEBUG_MODE = os.getenv('DEBUG_MODE', 'false').lower() == 'true'
 DEBUG_STAGE = os.getenv('DEBUG_STAGE', 'false').lower() == 'true'
 
-# Dynamic backend URL configuration based on environment
-def get_backend_url():
-    """Get backend URL based on environment configuration"""
-    # Check if custom backend URL is provided
-    custom_url = os.getenv('BACKEND_API_URL')
-    if custom_url and custom_url.strip():
-        return custom_url
-    
-    # Determine URL based on environment
-    debug_mode = os.getenv('DEBUG_MODE', 'false').lower() == 'true'
-    debug_stage = os.getenv('DEBUG_STAGE', 'false').lower() == 'true'
-    
-    if debug_mode or debug_stage:
-        # Debug mode: use direct container communication
-        return 'http://backend:8000'
-    else:
-        # Production mode: use domain URL through Caddy proxy
-        domain = os.getenv('DOMAIN_NAME', 'smarthome.the-jasperezlife.com')
-        if not domain or domain.strip() == '':
-            domain = 'smarthome.the-jasperezlife.com'
-        return f'https://{domain}/api'
-
+# Get backend URL using centralized configuration
 BACKEND_API_URL = get_backend_url()
 logger.info(f"Using backend URL: {BACKEND_API_URL}")
 logger.info(f"Debug mode: {DEBUG_MODE}, Debug stage: {DEBUG_STAGE}")
@@ -55,22 +35,32 @@ def create_app():
     from routes.debug_routes import debug_blueprint  # 延遲匯入
     app = Flask(__name__)
     
-    # Initialize services
-    line_service = LineService(LINE_CHANNEL_ACCESS_TOKEN)
+    # Initialize services with backend URL
+    line_service = LineService(LINE_CHANNEL_ACCESS_TOKEN, BACKEND_API_URL)
     chatgpt_service = ChatGPTService(CHATGPT_API_KEY, BACKEND_API_URL)
     
     @app.route('/webhook', methods=['POST'])
     def webhook():
         """Handle LINE webhook events"""
-        body = request.json
-        events = body.get('events', [])
-        for event in events:
-            reply_token = event.get('replyToken')
-            user_message = event.get('message', {}).get('text', '')
-            if reply_token and user_message:
-                response = chatgpt_service.process_message(user_message)
-                line_service.reply_to_line(reply_token, response)
-        return jsonify({'status': 'success'})
+        try:
+            body = request.json
+            if body is None:
+                return jsonify({'error': 'Invalid JSON or empty body'}), 400
+            
+            events = body.get('events', [])
+            for event in events:
+                reply_token = event.get('replyToken')
+                user_message = event.get('message', {}).get('text', '')
+                # 從 LINE 事件中提取 user_id
+                user_id = event.get('source', {}).get('userId')
+                
+                if reply_token and user_message:
+                    # Use the new sequence diagram flow with user_id for conversation history
+                    line_service.process_user_message(user_message, reply_token, chatgpt_service, user_id)
+            return jsonify({'status': 'success'})
+        except Exception as e:
+            logger.error(f"Error processing webhook: {e}")
+            return jsonify({'error': str(e)}), 400
     
     # Register blueprints
     app.register_blueprint(debug_blueprint)
@@ -99,4 +89,5 @@ if __name__ == '__main__':
     
     logger.info(f"Starting LineBotAI with DEBUG_MODE={DEBUG_MODE}")
     app = create_app()
+
     app.run(host=host, port=port, debug=DEBUG_MODE)

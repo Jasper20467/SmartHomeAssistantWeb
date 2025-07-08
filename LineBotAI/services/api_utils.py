@@ -1,5 +1,6 @@
 import logging
 import sys
+import os
 from pathlib import Path
 
 # Add the project root directory to the Python path
@@ -7,9 +8,10 @@ project_root = Path(__file__).resolve().parents[1]  # Adjust to point to the cor
 sys.path.insert(0, str(project_root))  # Use insert(0) to prioritize this path
 
 from Home_assistant.client import HomeAssistantClient  # Adjusted import path
+from config.url_config import get_backend_url
 
-# Initialize HomeAssistantClient
-BACKEND_API_URL = "http://localhost:8000"  # Replace with actual backend URL
+# Initialize HomeAssistantClient with dynamic backend URL
+BACKEND_API_URL = get_backend_url()
 home_assistant_client = HomeAssistantClient(base_url=BACKEND_API_URL)
 
 logger = logging.getLogger(__name__)

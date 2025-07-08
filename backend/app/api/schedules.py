@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, date
 from pydantic import BaseModel, Field
 from app.database.database import get_db
 from app.models.schedule import Schedule
@@ -34,11 +34,26 @@ class ScheduleResponse(ScheduleBase):
 @router.get("/", response_model=List[ScheduleResponse])
 async def get_schedules(
     skip: int = 0, 
-    limit: int = 100, 
+    limit: int = 100,
+    date_filter: Optional[str] = Query(None, description="Filter by date (YYYY-MM-DD format)"),
     db: AsyncSession = Depends(get_db)
 ):
-    """Get all schedules with pagination"""
-    result = await db.execute(select(Schedule).offset(skip).limit(limit))
+    """Get all schedules with pagination and optional date filtering"""
+    query = select(Schedule)
+    
+    # Add date filtering if provided
+    if date_filter:
+        try:
+            filter_date = datetime.strptime(date_filter, "%Y-%m-%d").date()
+            # Filter schedules that start on the specified date
+            query = query.filter(
+                Schedule.start_time >= datetime.combine(filter_date, datetime.min.time()),
+                Schedule.start_time < datetime.combine(filter_date, datetime.max.time())
+            )
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+    
+    result = await db.execute(query.offset(skip).limit(limit))
     schedules = result.scalars().all()
     return schedules
 
@@ -109,3 +124,23 @@ async def delete_schedule(
     await db.delete(db_schedule)
     await db.commit()
     return None
+
+@router.get("/by-date/{date_str}", response_model=List[ScheduleResponse])
+async def get_schedules_by_date(
+    date_str: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """Get schedules for a specific date (YYYY-MM-DD format)"""
+    try:
+        filter_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+    
+    result = await db.execute(
+        select(Schedule).filter(
+            Schedule.start_time >= datetime.combine(filter_date, datetime.min.time()),
+            Schedule.start_time < datetime.combine(filter_date, datetime.max.time())
+        )
+    )
+    schedules = result.scalars().all()
+    return schedules

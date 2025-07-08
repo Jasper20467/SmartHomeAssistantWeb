@@ -36,7 +36,7 @@ class ConsumableService:
         endpoint = f"/api/consumables/{consumable_id}"
         return self.base.make_request("PUT", endpoint, data=update_data)
     
-    def delete_consumable(self, consumable_id: str) -> None:
+    def delete_consumable(self, consumable_id: str) -> Dict[str, Any]:
         """Delete a consumable by its ID."""
         endpoint = f"/api/consumables/{consumable_id}"
-        self.base.make_request("DELETE", endpoint)
+        return self.base.make_request("DELETE", endpoint)

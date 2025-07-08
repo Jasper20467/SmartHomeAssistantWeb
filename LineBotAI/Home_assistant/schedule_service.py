@@ -16,9 +16,18 @@ class ScheduleService:
         """Initialize with base service."""
         self.base = base_service
     
-    def get_schedules(self, skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
-        """Get all schedules with pagination."""
-        endpoint = f"/api/schedules?skip={skip}&limit={limit}"
+    def get_schedules(self, skip: int = 0, limit: int = 100, date: str = None) -> List[Dict[str, Any]]:
+        """Get all schedules with pagination and optional date filtering."""
+        if date:
+            # Use the date filter parameter
+            endpoint = f"/api/schedules?skip={skip}&limit={limit}&date_filter={date}"
+        else:
+            endpoint = f"/api/schedules?skip={skip}&limit={limit}"
+        return self.base.make_request("GET", endpoint)
+    
+    def get_schedules_by_date(self, date: str) -> List[Dict[str, Any]]:
+        """Get schedules for a specific date (YYYY-MM-DD format)."""
+        endpoint = f"/api/schedules/by-date/{date}"
         return self.base.make_request("GET", endpoint)
     
     def create_schedule(self, schedule_data: Dict[str, Any]) -> Dict[str, Any]:

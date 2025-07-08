@@ -1,0 +1,132 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 資料庫 - 用於本地開發和測試
+  db:
+    image: postgres:14
+    container_name: smarthome_db_debug
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_debug_data:/var/lib/postgresql/data
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=smarthome
+      - TZ=Asia/Taipei
+      - PGTZ=Asia/Taipei
+    restart: unless-stopped
+    networks:
+      - debug-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backend API - 支援 VS Code Debug
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../docker/backend.Dockerfile
+    container_name: smarthome_backend_debug
+    ports:
+      - "8000:8000"  # 對外暴露，方便調試
+      - "5678:5678"  # Python debugpy 端口
+    volumes:
+      - ./backend:/app  # 掛載源碼，支援熱重載
+      - ./docs:/app/docs  # 掛載文檔
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/smarthome
+      - ENVIRONMENT=development
+      - DEBUG_MODE=true
+      - TZ=Asia/Taipei
+      - PYTHONPATH=/app
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - debug-network
+    # 支援 VS Code debugpy
+    command: >
+      sh -c "pip install debugpy &&
+             python -m debugpy --listen 0.0.0.0:5678 --wait-for-client -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  # LineBot AI - 支援 VS Code Debug
+  linebot:
+    build:
+      context: .
+      dockerfile: ./docker/linebot.Dockerfile
+    container_name: smarthome_linebot_debug
+    ports:
+      - "5000:5000"  # 對外暴露，方便調試
+      - "5679:5679"  # Python debugpy 端口
+    volumes:
+      - ./LineBotAI:/app  # 掛載源碼，支援熱重載
+    environment:
+      - LINE_CHANNEL_ACCESS_TOKEN=${LINE_CHANNEL_ACCESS_TOKEN}
+      - CHATGPT_API_KEY=${CHATGPT_API_KEY}
+      - BACKEND_API_URL=http://backend:8000
+      - DEBUG_MODE=true
+      - DEBUG_STAGE=true
+      - TZ=Asia/Taipei
+      - PYTHONPATH=/app
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - debug-network
+    # 支援 VS Code debugpy
+    command: >
+      sh -c "pip install debugpy &&
+             echo 'LineBot container is waiting for debugger to attach on port 5679...' &&
+             python -m debugpy --listen 0.0.0.0:5679 --wait-for-client app.py"
+
+  # Frontend - 用於完整測試
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/frontend.Dockerfile
+    container_name: smarthome_frontend_debug
+    ports:
+      - "4200:80"  # 使用不同端口避免衝突
+    environment:
+      - NODE_ENV=development
+      - TZ=Asia/Taipei
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - debug-network
+
+  # Redis - 可選，用於緩存和會話管理
+  redis:
+    image: redis:7-alpine
+    container_name: smarthome_redis_debug
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_debug_data:/data
+    environment:
+      - TZ=Asia/Taipei
+    restart: unless-stopped
+    networks:
+      - debug-network
+    command: redis-server --appendonly yes
+
+networks:
+  debug-network:
+    driver: bridge
+    name: smarthome_debug_network
+
+volumes:
+  postgres_debug_data:
+    name: smarthome_postgres_debug_data
+  redis_debug_data:
+    name: smarthome_redis_debug_data

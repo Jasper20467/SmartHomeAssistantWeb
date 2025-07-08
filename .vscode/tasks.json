@@ -1,0 +1,166 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Start All Debug Containers",
+            "type": "shell",
+            "command": "docker-compose",
+            "args": [
+                "-f",
+                "docker-compose_debug.yml",
+                "up",
+                "-d"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": [],
+            "detail": "啟動所有 debug 容器"
+        },
+        {
+            "label": "Start Backend Debug Container",
+            "type": "shell",
+            "command": "docker-compose",
+            "args": [
+                "-f",
+                "docker-compose_debug.yml",
+                "up",
+                "-d",
+                "db",
+                "backend"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": [],
+            "detail": "啟動 Backend 和資料庫容器"
+        },
+        {
+            "label": "Start LineBot Debug Container",
+            "type": "shell",
+            "command": "docker-compose",
+            "args": [
+                "-f",
+                "docker-compose_debug.yml",
+                "up",
+                "-d",
+                "db",
+                "backend",
+                "linebot"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": [],
+            "detail": "啟動 LineBot、Backend 和資料庫容器"
+        },
+        {
+            "label": "Stop Debug Containers",
+            "type": "shell",
+            "command": "docker-compose",
+            "args": [
+                "-f",
+                "docker-compose_debug.yml",
+                "down"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": [],
+            "detail": "停止所有 debug 容器"
+        },
+        {
+            "label": "Restart Debug Containers",
+            "type": "shell",
+            "command": "docker-compose",
+            "args": [
+                "-f",
+                "docker-compose_debug.yml",
+                "restart"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": [],
+            "detail": "重啟所有 debug 容器"
+        },
+        {
+            "label": "Show Debug URLs",
+            "type": "shell",
+            "command": "echo",
+            "args": [
+                "Debug URLs:\n- Backend API: http://localhost:8000\n- Backend Debug: localhost:5678\n- LineBot API: http://localhost:5000\n- LineBot Debug: localhost:5679\n- Frontend: http://localhost:4200\n- Database: localhost:5432\n- Redis: localhost:6379"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "new"
+            },
+            "problemMatcher": [],
+            "detail": "顯示所有 debug 服務的 URL"
+        },
+        {
+            "label": "View Debug Logs",
+            "type": "shell",
+            "command": "docker-compose",
+            "args": [
+                "-f",
+                "docker-compose_debug.yml",
+                "logs",
+                "-f"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "new"
+            },
+            "problemMatcher": [],
+            "detail": "查看 debug 容器日誌"
+        },
+        {
+            "label": "Clean Debug Environment",
+            "type": "shell",
+            "command": "docker-compose",
+            "args": [
+                "-f",
+                "docker-compose_debug.yml",
+                "down",
+                "-v",
+                "--remove-orphans"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": [],
+            "detail": "清理 debug 環境（包含資料卷）"
+        }
+    ]
+}

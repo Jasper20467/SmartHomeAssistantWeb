@@ -37,7 +37,41 @@
 
 ### 本地開發環境設置
 
-#### 方法 1: 直接安裝
+#### 方法 1: VS Code Debug 環境 (推薦) 🐛
+
+完整的容器化調試環境，支援 VS Code remote debugging：
+
+```bash
+# 快速啟動 (Windows)
+.\start-debug.bat
+
+# 快速啟動 (Linux/Mac)
+./start-debug.sh
+
+# 或手動啟動
+docker-compose -f docker-compose_debug.yml up -d
+```
+
+**Debug 環境特色：**
+- ✅ VS Code Remote Debugging 支援
+- ✅ 代碼熱重載 (Hot Reload)
+- ✅ 完整的開發工具鏈
+- ✅ 一鍵啟動所有服務
+
+**服務端點：**
+- Backend API: http://localhost:8000 (Debug: 5678)
+- LineBot API: http://localhost:5000 (Debug: 5679)
+- Frontend: http://localhost:4200
+- Database: localhost:5432
+
+**VS Code Debug 設定：**
+1. 打開 VS Code Debug Panel (Ctrl+Shift+D)
+2. 選擇 "Backend API Debug (Docker)" 或 "LineBot API Debug (Docker)"
+3. 點擊開始調試 (F5)
+
+📖 詳細說明：[Debug Environment Guide](docs/debug-environment-guide.md)
+
+#### 方法 2: 直接安裝
 
 ```bash
 # 克隆專案
@@ -63,7 +97,7 @@ cp .env.example .env
 python scripts/init_sqlite_demo_db.py
 ```
 
-#### 方法 2: 使用 Docker (推薦)
+#### 方法 3: 使用 Docker (推薦)
 
 ```bash
 # 克隆專案

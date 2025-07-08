@@ -34,10 +34,20 @@ class BaseService:
             
             response.raise_for_status()  # Raise exception for error status codes
             
-            return response.json()
+            # Handle empty responses (like 204 No Content)
+            if response.status_code == 204 or not response.content:
+                return {"success": True, "message": "操作成功完成"}
+            
+            try:
+                return response.json()
+            except json.JSONDecodeError:
+                # If we can't parse JSON but the status is OK, return success
+                if response.status_code < 400:
+                    return {"success": True, "message": "操作成功完成"}
+                else:
+                    self.logger.error(f"Failed to decode JSON response from {url}")
+                    return {"error": "Invalid JSON response"}
+                    
         except requests.exceptions.RequestException as e:
             self.logger.error(f"API request error: {e}")
             return {"error": str(e)}
-        except json.JSONDecodeError:
-            self.logger.error(f"Failed to decode JSON response from {url}")
-            return {"error": "Invalid JSON response"}
