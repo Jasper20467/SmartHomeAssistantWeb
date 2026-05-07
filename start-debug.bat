@@ -29,7 +29,7 @@ if not exist .env (
 )
 
 echo 🚀 啟動 Debug 環境...
-docker-compose -f docker-compose_debug.yml up -d
+docker-compose up -d
 
 echo ⏳ 等待服務啟動...
 timeout /t 10 /nobreak >nul
@@ -55,9 +55,9 @@ echo    2. 選擇 'Backend API Debug (Docker)' 或 'LineBot API Debug (Docker)'
 echo    3. 點擊開始調試 (F5)
 echo.
 echo 📋 常用命令：
-echo    • 查看日誌: docker-compose -f docker-compose_debug.yml logs -f
-echo    • 停止服務: docker-compose -f docker-compose_debug.yml down
-echo    • 重啟服務: docker-compose -f docker-compose_debug.yml restart
+echo    • 查看日誌: docker-compose logs -f
+echo    • 停止服務: docker-compose down
+echo    • 重啟服務: docker-compose restart
 echo.
 echo Happy Debugging! 🐛✨
 echo.

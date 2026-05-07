@@ -49,7 +49,7 @@
 ./start-debug.sh
 
 # 或手動啟動
-docker-compose -f docker-compose_debug.yml up -d
+docker-compose up -d
 ```
 
 **Debug 環境特色：**

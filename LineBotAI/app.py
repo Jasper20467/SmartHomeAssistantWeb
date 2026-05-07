@@ -32,7 +32,6 @@ logger.info(f"Using backend URL: {BACKEND_API_URL}")
 logger.info(f"Debug mode: {DEBUG_MODE}, Debug stage: {DEBUG_STAGE}")
 
 def create_app():
-    from routes.debug_routes import debug_blueprint  # 延遲匯入
     app = Flask(__name__)
     
     # Initialize services with backend URL
@@ -61,9 +60,6 @@ def create_app():
         except Exception as e:
             logger.error(f"Error processing webhook: {e}")
             return jsonify({'error': str(e)}), 400
-    
-    # Register blueprints
-    app.register_blueprint(debug_blueprint)
     
     @app.route('/api/health')
     def health_check():
