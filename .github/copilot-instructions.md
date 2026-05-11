@@ -24,17 +24,17 @@ User (Browser)
 
 LINE User
     └── Webhook → LineBotAI Flask (port 5000)
-                    ├── OpenAI API (gpt-4.1-nano)
+                    ├── Google Gemini (LangGraph ReAct Agent)
                     └── HTTP → Backend FastAPI (port 8000)
 ```
 
 ### 資料流（LineBotAI）
 ```
 LINE Webhook → LineService.process_user_message()
-    → ChatGPTService.process_message()  # 回傳 action + parameters JSON
-    → LineService._perform_backend_operation()
-        → HomeAssistantClient → ScheduleService / ConsumableService
-            → Backend REST API
+    → AgentService.run(user_message, user_id)
+        → LangGraph ReAct Agent
+            ├── Tool: create/get/update/delete_schedule  → HomeAssistantClient → Backend API
+            └── Tool: create/get/update/delete_consumable → HomeAssistantClient → Backend API
     → LineService.reply_to_line()
 ```
 
@@ -70,18 +70,21 @@ environments/        # apiUrl 設定
 ### LineBotAI (`LineBotAI/`)
 ```
 app.py               # Flask app factory，Webhook 入口
+agent/
+├── __init__.py
+├── tools.py            # LangChain @tool 定義，包裝 HomeAssistantClient 方法
+└── prompts.py          # Agent 系統 Prompt（動態注入台灣時間）
 services/
-├── line_service.py  # LINE 訊息收發 + 後端操作協調
-├── chatgpt_service.py  # OpenAI API 呼叫 + 對話歷史管理
-└── api_utils.py     # HomeAssistantClient 封裝工具
+├── line_service.py     # LINE 訊息收發 + Agent 協調
+└── agent_service.py    # LangGraph ReAct Agent 初始化與執行
 Home_assistant/      # 後端 API 客戶端套件
-├── client.py        # HomeAssistantClient（整合所有 service）
-├── base_service.py  # HTTP 請求基底
+├── client.py           # HomeAssistantClient（整合所有 service）
+├── base_service.py     # HTTP 請求基底
 ├── schedule_service.py
 ├── consumable_service.py
 └── device_service.py
 config/
-└── url_config.py    # 動態取得 backend URL（依環境判斷）
+└── url_config.py       # 動態取得 backend URL（依環境判斷）
 ```
 
 ---
@@ -109,9 +112,9 @@ config/
 ### LineBotAI（Python / Flask）
 
 - **App Factory**：Flask app 以 `create_app()` 工廠函式建立。
-- **服務職責分離**：`LineService` 處理 LINE 協定；`ChatGPTService` 處理 AI 邏輯；`HomeAssistantClient` 封裝所有後端呼叫。
-- **ChatGPT 回應格式**：GPT 應回傳 JSON，包含 `action`、`parameters`、`reply` 欄位。`action` 值：`text_reply`、`create_schedule`、`get_schedule`、`update_schedule`、`delete_schedule`、`create_consumable`、`get_consumable`、`update_consumable`、`delete_consumable`。
-- **對話歷史**：每位 LINE 用戶（`user_id`）維護獨立的 `deque`（最多 5 輪）。
+- **服務職責分離**：`LineService` 處理 LINE 協定；`AgentService` 執行 LangGraph ReAct Agent；`HomeAssistantClient` 封裝所有後端呼叫。
+- **Agent Tools**：定義在 `agent/tools.py`，以 `@tool` 包裝 8 個 `HomeAssistantClient` 方法（schedule/consumable CRUD）。
+- **對話歷史**：每位 LINE 用戶（`user_id`）由 LangGraph `MemorySaver` 維護獨立的 `thread_id`，支援代名詞引用。
 - **Backend URL**：一律透過 `config/url_config.py` 的 `get_backend_url()` 取得，不直接讀取環境變數。
 
 ---
@@ -141,7 +144,8 @@ docker-compose up -d
 |------|---------|------|
 | `DATABASE_URL` | Backend | `postgresql+asyncpg://...` |
 | `LINE_CHANNEL_ACCESS_TOKEN` | LineBotAI | LINE channel token |
-| `CHATGPT_API_KEY` | LineBotAI | OpenAI API key |
+| `GEMINI_API_KEY` | LineBotAI | Google Gemini API 金鑰 |
+| `GEMINI_MODEL` | LineBotAI | Gemini 模型名稱（預設 `gemini-2.0-flash`）|
 | `BACKEND_API_URL` | LineBotAI | 覆寫預設後端 URL |
 | `DEBUG_MODE` | LineBotAI | `true` 時使用容器內網路 |
 | `DOMAIN_NAME` | LineBotAI | 生產環境網域名稱 |
@@ -196,9 +200,10 @@ docker-compose up -d
 
 ### 新增 LineBotAI 指令支援
 
-1. 在 `ChatGPTService` 的系統 prompt 新增新 `action` 定義。
-2. 在 `LineService._perform_backend_operation()` 新增對應的 `elif action == '...'` 分支。
-3. 若需要新的後端呼叫，在 `Home_assistant/` 對應的 service 類別新增方法。
+1. 在 `Home_assistant/` 對應 service 類別新增方法（例如 `schedule_service.py`）。
+2. 在 `agent/tools.py` 新增對應的 `@tool` 裝飾器函式，包裝上一步的方法。
+3. 將新 Tool 加入 `AgentService` 的 tools 清單。
+4. 視需要在 `agent/prompts.py` 更新系統 Prompt，說明新功能的使用時機。
 
 ---
 

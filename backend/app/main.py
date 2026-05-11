@@ -15,7 +15,7 @@ origins = [
     "http://localhost:4200",  # Dev - Angular default
     "http://localhost:80",    # Dev - Docker with port 80
     "http://localhost",       # Dev - Docker default port
-    "*",                      # Allow all origins in production
+    "https://smarthome.the-jasperezlife.com",  # Production frontend
 ]
 
 app.add_middleware(

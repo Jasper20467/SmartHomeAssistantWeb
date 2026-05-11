@@ -51,7 +51,10 @@ services:
       - backend
     environment:
       - LINE_CHANNEL_ACCESS_TOKEN=${LINE_CHANNEL_ACCESS_TOKEN}
-      - CHATGPT_API_KEY=${CHATGPT_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.0-flash}
+      - AGENT_MEMORY_TTL_SECONDS=${AGENT_MEMORY_TTL_SECONDS:-86400}
+      - AGENT_MAX_MESSAGES=${AGENT_MAX_MESSAGES:-30}
       - BACKEND_API_URL=http://backend:8000
       - DOMAIN_NAME=localhost
       - DEBUG_MODE=true

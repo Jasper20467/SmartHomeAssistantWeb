@@ -16,7 +16,8 @@ COPY LineBotAI/ .
 
 # Set environment variables for configuration
 ENV LINE_CHANNEL_ACCESS_TOKEN=your_line_channel_access_token \
-    CHATGPT_API_KEY=your_chatgpt_api_key \
+    GEMINI_API_KEY=your_gemini_api_key \
+    GEMINI_MODEL=gemini-2.0-flash \
     BACKEND_API_URL=http://backend:8000 \
     DOMAIN_NAME=localhost \
     FLASK_ENV=production \

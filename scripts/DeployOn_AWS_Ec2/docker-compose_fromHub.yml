@@ -63,7 +63,8 @@ services:
       - "5000"
     environment:
       - LINE_CHANNEL_ACCESS_TOKEN=${LINE_CHANNEL_ACCESS_TOKEN}
-      - CHATGPT_API_KEY=${CHATGPT_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.0-flash}
       - BACKEND_API_URL=http://backend:8000
       - DOMAIN_NAME=smarthome.the-jasperezlife.com
       - DEBUG_MODE=false

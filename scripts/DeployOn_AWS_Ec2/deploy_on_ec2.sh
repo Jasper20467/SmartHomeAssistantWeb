@@ -87,10 +87,12 @@ echo "創建 .env 配置文件..."
 cat > .env << 'EOL'
 # LINE Bot 配置
 LINE_CHANNEL_ACCESS_TOKEN=your_line_channel_access_token_here
-CHATGPT_API_KEY=your_chatgpt_api_key_here
+# Google Gemini 配置
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-2.0-flash
 EOL
 
-echo "請編輯 .env 文件以設置您的 LINE 頻道訪問令牌和 ChatGPT API 密鑰"
+echo "請編輯 .env 文件以設置您的 LINE 頻道訪問令牌和 Gemini API 金鑰"
 echo "使用以下命令:"
 echo "nano .env"
 
@@ -146,7 +148,7 @@ echo "📝 注意事項："
 echo "   1. 確保域名 smarthome.the-jasperezlife.com 指向此 EC2 實例"
 echo "   2. 確保安全組開放 80 和 443 端口"
 echo "   3. 設定 LINE Bot Webhook URL: https://smarthome.the-jasperezlife.com/webhook"
-echo "   4. 在 .env 檔案中設定 LINE_CHANNEL_ACCESS_TOKEN 和 CHATGPT_API_KEY"
+echo "   4. 在 .env 檔案中設定 LINE_CHANNEL_ACCESS_TOKEN 和 GEMINI_API_KEY"
 echo "   5. 如需查看 Caddy 日誌：docker-compose -f docker-compose_fromHub.yml logs -f caddy"
 echo "===================================================="
 echo "如果您需要查看容器日誌，請運行:"

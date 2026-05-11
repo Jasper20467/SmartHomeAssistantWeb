@@ -5,9 +5,13 @@ from sqlalchemy.sql import text
 
 logger = logging.getLogger(__name__)
 
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql+asyncpg://postgres:postgres@db:5432/smarthome"
+)
 
 async_engine = create_async_engine(
-    "postgresql+asyncpg://postgres:postgres@db:5432/smarthome",
+    DATABASE_URL,
     pool_pre_ping=True,
     echo=True,
     future=True,

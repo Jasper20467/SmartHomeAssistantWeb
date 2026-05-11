@@ -19,4 +19,4 @@ def get_backend_url():
         domain = os.getenv('DOMAIN_NAME', 'smarthome.the-jasperezlife.com')
         if not domain or domain.strip() == '':
             domain = 'smarthome.the-jasperezlife.com'
-        return f'https://{domain}/api'
+        return f'https://{domain}'

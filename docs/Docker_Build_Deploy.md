@@ -113,7 +113,8 @@ BACKEND_API_URL=http://backend:8000
 DEBUG_MODE=true
 DEBUG_STAGE=true
 LINE_CHANNEL_ACCESS_TOKEN=your_token
-CHATGPT_API_KEY=your_key
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL=gemini-2.0-flash
 ```
 
 ### 生產環境
@@ -128,7 +129,8 @@ DOMAIN_NAME=smarthome.the-jasperezlife.com
 DEBUG_MODE=false
 DEBUG_STAGE=false
 LINE_CHANNEL_ACCESS_TOKEN=your_token
-CHATGPT_API_KEY=your_key
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL=gemini-2.0-flash
 ```
 
 ---

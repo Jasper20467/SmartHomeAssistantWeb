@@ -1,6 +1,6 @@
 # LineBotAI
 
-LineBotAI 是一個基於 Flask 的應用程式，結合了 LINE Messaging API 與 ChatGPT，提供智能聊天機器人服務。
+LineBotAI 是一個基於 Flask 的應用程式，結合了 LINE Messaging API 與 LangGraph ReAct Agent（Google Gemini），提供智能聊天機器人服務。
 
 ## 程式架構
 
@@ -16,7 +16,8 @@ LineBotAI 是一個基於 Flask 的應用程式，結合了 LINE Messaging API �
 應用程式使用以下環境變數：
 
 - `LINE_CHANNEL_ACCESS_TOKEN`：LINE Messaging API 的存取權杖。
-- `CHATGPT_API_KEY`：ChatGPT 的 API 金鑰。
+- `GEMINI_API_KEY`：Google Gemini 的 API 金鑰（必填）。
+- `GEMINI_MODEL`：Gemini 模型名稱（選填，預設值：`gemini-2.0-flash`）。
 - `BACKEND_API_URL`：後端 API 的 URL（預設值：`http://localhost:8000`）。
 - `DEBUG_MODE`：啟用或停用除錯模式（`true` 或 `false`）。
 - `DEBUG_STAGE`：啟用或停用除錯階段（`true` 或 `false`）。
