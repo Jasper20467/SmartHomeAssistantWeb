@@ -106,7 +106,10 @@ class AgentService:
         Returns:
             The agent's reply as a plain string.
         """
-        config = {"configurable": {"thread_id": self._thread_id(user_id)}}
+        config = {
+            "configurable": {"thread_id": self._thread_id(user_id)},
+            "recursion_limit": 10,
+        }
         try:
             result = self._agent.invoke(
                 {"messages": [{"role": "user", "content": user_message}]},
@@ -121,7 +124,32 @@ class AgentService:
                 return last.content if hasattr(last, "content") else last.get("content", "")
             return "抱歉，我無法處理您的請求。"
         except Exception as e:
-            self.logger.error("AgentService.run error for user %s: %s", user_id, e)
+            error_str = str(e)
+            # Gemini rejects corrupted conversation history (e.g. orphaned tool call
+            # left by a previously interrupted request). Auto-clear and retry once.
+            if "function call turn" in error_str or "INVALID_ARGUMENT" in error_str:
+                self.logger.warning(
+                    "Corrupted conversation history detected for user %s, clearing and retrying.", user_id
+                )
+                self.clear_history(user_id)
+                try:
+                    fresh_config = {
+                        "configurable": {"thread_id": self._thread_id(user_id)},
+                        "recursion_limit": 10,
+                    }
+                    result = self._agent.invoke(
+                        {"messages": [{"role": "user", "content": user_message}]},
+                        config=fresh_config,
+                    )
+                    messages = result.get("messages", [])
+                    if messages:
+                        last = messages[-1]
+                        self._last_activity[user_id] = time.time()
+                        return last.content if hasattr(last, "content") else last.get("content", "")
+                except Exception as retry_e:
+                    self.logger.error("AgentService.run retry error for user %s: %s", user_id, retry_e)
+            else:
+                self.logger.error("AgentService.run error for user %s: %s", user_id, e)
             return "抱歉，處理您的請求時發生錯誤，請稍後再試。"
 
     def clear_history(self, user_id: str) -> None:

@@ -5,6 +5,7 @@ services:
     build:
       context: ./frontend
       dockerfile: ../docker/frontend.Dockerfile
+    image: homeassistant.frontend
     ports:
       - "80:80"
     depends_on:
@@ -24,6 +25,7 @@ services:
     build:
       context: ./backend
       dockerfile: ../docker/backend.Dockerfile
+    image: homeassistant.backend
     ports:
       - "8000:8000"
     volumes:
@@ -42,6 +44,7 @@ services:
     build:
       context: .
       dockerfile: docker/linebot.Dockerfile
+    image: homeassistant.linebot
     ports:
       - "5000:5000"
     volumes:
