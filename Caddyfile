@@ -1,0 +1,68 @@
+{
+  # ── 全域選項 ────────────────────────────────────────────────────────────────
+  # 生產環境使用正式 Let's Encrypt CA，Caddy 會自動申請並續約 TLS 憑證。
+  # 若需測試部署（避免觸及 Let's Encrypt rate limit），取消註解下一行，
+  # 改用 staging CA（憑證不受信任，但不計入配額）。
+  # acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+}
+
+smarthome.the-jasperezlife.com {
+
+  # ── 壓縮 ────────────────────────────────────────────────────────────────────
+  # 優先使用 zstd（壓縮率與效能優於 gzip），瀏覽器不支援時回退至 gzip
+  encode zstd gzip
+
+  # ── 路由規則 1：LINE Bot 相關路徑 → linebot 容器 (:5000) ───────────────────
+  # /webhook       : LINE Messaging API 的 Webhook 入口（接收使用者訊息）
+  # /linebot/*     : LineBotAI 專用端點（健康檢查等）
+  # /api/debug/*   : Debug 測試端點（需 DEBUG_STAGE=true 才會啟用）
+  @linebot {
+    path /webhook
+    path /linebot/*
+    path /api/debug/*
+  }
+  reverse_proxy @linebot linebot:5000
+
+  # ── 路由規則 2：REST API 路徑 → backend 容器 (:8000) ───────────────────────
+  # 所有 /api/* 請求轉發至 FastAPI 後端（schedules、consumables 等端點）
+  @api {
+    path /api/*
+  }
+  reverse_proxy @api backend:8000
+
+  # ── 路由規則 3（預設）：其餘所有請求 → frontend 容器 (Nginx :80) ────────────
+  # Angular SPA 由 Nginx 提供靜態資源，Nginx 內部處理客戶端路由（try_files）
+  reverse_proxy frontend:80
+
+  # ── 安全性 HTTP 標頭 ─────────────────────────────────────────────────────────
+  header {
+    # HSTS：強制使用 HTTPS，有效期 1 年，含所有子域名，可申請加入瀏覽器預載清單
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+    # 防止瀏覽器對回應內容進行 MIME 類型嗅探（MIME sniffing）
+    X-Content-Type-Options "nosniff"
+
+    # 禁止本站被 iframe 嵌入，防止 Clickjacking 攻擊
+    X-Frame-Options "DENY"
+
+    # 跨域請求僅傳送 origin（不含 path 與 query），同域請求傳送完整 referrer
+    Referrer-Policy "strict-origin-when-cross-origin"
+
+    # CSP：限制資源僅可來自同源
+    # unsafe-inline：Angular 執行時需要 inline style/script
+    # ws: wss:：允許 WebSocket 連線（本地開發 ng serve 熱重載使用）
+    Content-Security-Policy "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' ws: wss:; img-src 'self' data:;"
+
+    # CORS：允許所有來源，LINE Messaging API 回呼需要跨域存取 /webhook
+    Access-Control-Allow-Origin *
+    Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers "Origin, Content-Type, Authorization"
+  }
+
+  # ── TLS 設定 ─────────────────────────────────────────────────────────────────
+  # 憑證由 Caddy 自動向 Let's Encrypt 申請（儲存於 caddy_data volume）
+  # 最低版本限制為 TLS 1.2，現代瀏覽器優先協商 TLS 1.3
+  tls {
+    protocols tls1.2 tls1.3
+  }
+}
