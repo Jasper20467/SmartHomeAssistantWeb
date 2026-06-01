@@ -33,12 +33,12 @@ logger.setLevel(logging.INFO)
 # Initialize database
 @app.on_event("startup")
 async def startup_event():
-    logger.info("Starting up database...")
+    logger.info("Starting up...")
     try:
-        await init_db.create_tables()
-        logger.info("Database initialized successfully")
+        await init_db.verify_connection()
+        logger.info("Database connection verified successfully")
     except Exception as e:
-        logger.error(f"Database initialization failed: {e}")
+        logger.error(f"Database connection failed: {e}")
         raise
 
 # Include routers
